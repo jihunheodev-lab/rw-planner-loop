@@ -13,6 +13,7 @@ Full deterministic contract for the planning phase of rw-planner-loop skill.
 7. Ensure `runSubagent` is available. If unavailable: print `RW_ENV_UNSUPPORTED`, stop.
 8. Do not write product code. Allowed writes: `.ai/**` only.
 9. If `askQuestions` is unavailable: print `INTERVIEW_REQUIRED`, stop.
+10. If `.ai/runtime/strikes/` contains strike history files, read relevant files before intake to inform replan context.
 
 ## Failure Output Tokens
 
@@ -158,6 +159,7 @@ Strategy selection:
    - Acceptance Criteria, Accessibility Criteria
    - Files to Create/Modify
    - Test Strategy, Verification
+   - Strike History Reference (optional): path to prior `.ai/runtime/strikes/<TASK-XX>-strikes.md` when replanning a previously blocked task
 3. Update `.ai/PROGRESS.md`:
    - Append new task rows as `pending`.
    - Create/update `## Phase Status` section.

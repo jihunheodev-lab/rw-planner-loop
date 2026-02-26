@@ -30,3 +30,6 @@ Rules:
    - one user-path verification evidence entry
 5) Commit with a conventional commit message.
 6) Never call `runSubagent`.
+7) Always append one line at the end of every dispatch:
+   - `APPROACH_SUMMARY <LOCKED_TASK_ID>: "<single-line summary>"`
+   - Keep it single-line only, max 200 chars, no newlines, escape inner `"` as `\"`.

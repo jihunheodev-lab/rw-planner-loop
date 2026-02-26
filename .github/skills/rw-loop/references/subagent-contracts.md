@@ -28,7 +28,8 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 - One passing test evidence (exit_code = 0) after implementation
 - One user-path verification evidence entry
 
-**Rules**: Complete only the locked task. Update exactly one task row. Commit with conventional message. Never call `runSubagent`.
+**Rules**: Complete only the locked task. Update exactly one task row. Commit with conventional message. Never call `runSubagent`. Always append one line:
+`APPROACH_SUMMARY <LOCKED_TASK_ID>: "<single-line summary>"` (max 200 chars, no newlines, escape inner `"` as `\"`).
 
 ---
 
@@ -99,3 +100,4 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 - Never call `runSubagent` from within a subagent.
 - Keep findings factual and actionable.
 - Use exact token format for machine-readable output.
+- `APPROACH_SUMMARY` is orchestrator-consumed only and is not a contract token.

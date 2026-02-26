@@ -17,6 +17,7 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
    - If missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
 6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
 7. If `.ai/runtime/rw-active-plan-id.txt` exists, read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph.
+8. Load `.ai/runtime/rw-strike-state.yaml` if present. If missing, initialize counters in memory and create it on first strike/security record. Use this state as the source of truth for `dispatch_id` generation across reruns/restarts.
 
 ## Mode Resolution
 
@@ -37,7 +38,7 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
 - State transitions:
   - `pending → in-progress` before dispatch
   - `in-progress → completed` only if delta/evidence invariants pass
-  - `in-progress → blocked` after 3-strike threshold
+  - `in-progress → blocked` after 3-strike threshold (Task Inspector FAIL only; Security CRITICAL uses immediate block path)
   - `completed → pending` forbidden unless explicit review rollback
 
 ## Main Loop
@@ -76,14 +77,33 @@ For each dispatched task:
 - Call `runSubagent` per locked task.
 - Require: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
 - On fail: keep `in-progress` or set `blocked` per retry threshold.
+- Strike counting: only `TASK_INSPECTION=FAIL` increments strike count.
+- On each `TASK_INSPECTION=FAIL`:
+  1. Collect tokens produced after Main Loop step 5 from the current dispatch cycle only, scoped to the current `LOCKED_TASK_ID` response (never global log): `REVIEW_FINDING`, `VERIFICATION_EVIDENCE` with `exit_code != 0`, and `APPROACH_SUMMARY`.
+  2. Do not re-collect tokens from prior dispatches.
+  3. Allocate `dispatch_id=<LOCKED_TASK_ID>-S<N>`, where `N` is the task's cumulative strike count from `.ai/runtime/rw-strike-state.yaml` (never from strike-file entry count).
+  4. If an entry with the same `dispatch_id` already exists in `.ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`, skip write (idempotency guard).
+  5. Ensure `.ai/runtime/strikes/` exists, then append one strike entry to `.ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`.
 - 3-strike rule: same task fails 3× → blocked + `REVIEW-ESCALATE` + stop with `NEXT_COMMAND=rw-planner`.
+- On 3rd strike (blocked):
+  1. Write summary + recommended alternatives to `.ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`.
+  2. Append to `.ai/PROGRESS.md`: `<LOCKED_TASK_ID> blocked (3-strike). See .ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`.
+  3. Append one concise pattern entry to `.ai/memory/shared-memory.md`.
 
 ### Security Gate
 
 - Load `.github/prompts/subagents/rw-loop-security-review.subagent.md`.
 - Call `runSubagent` with locked task IDs.
 - Require: `SECURITY_GATE=PASS|FAIL`.
-- On fail: print `SECURITY_GATE_FAILED`, keep `in-progress` or block for critical, stop.
+- On `SECURITY_GATE=FAIL`:
+  - Non-critical findings: print `SECURITY_GATE_FAILED`, keep `in-progress`, stop.
+  - Critical findings: block immediately (does not increment strike count), then:
+    1. Collect current-cycle `SECURITY_FINDING` tokens scoped to `LOCKED_TASK_ID`.
+    2. Allocate `dispatch_id=<LOCKED_TASK_ID>-SEC<N>`, where `N` is the task's cumulative security-block count from `.ai/runtime/rw-strike-state.yaml`.
+    3. If an entry with the same `dispatch_id` already exists in `.ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`, skip write; otherwise append one security entry.
+    4. Append to `.ai/PROGRESS.md`: `<LOCKED_TASK_ID> blocked (security-critical). See .ai/runtime/strikes/<LOCKED_TASK_ID>-strikes.md`.
+    5. Append one concise security pattern entry to `.ai/memory/shared-memory.md`.
+    6. Print `SECURITY_GATE_FAILED`, stop.
 
 ### Phase Inspector (when current phase tasks all completed)
 
