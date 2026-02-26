@@ -7,13 +7,15 @@
 
 ## 설치
 
-```bash
-# Windows
-git clone <repo-url> "%USERPROFILE%\.copilot\skills\rw-planner-loop"
+Copilot Chat에서 다음과 같이 말하세요:
 
-# macOS / Linux
-git clone <repo-url> "$HOME/.copilot/skills/rw-planner-loop"
 ```
+Fetch and follow instructions from https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/main/INSTALL.md
+```
+
+AI가 자동으로 12개 스킬 파일을 다운로드하여 프로젝트의 `.github/skills/`에 배치합니다.
+
+수동 설치 방법은 [INSTALL.md](INSTALL.md)를 참고하세요.
 
 ## 사용법
 
