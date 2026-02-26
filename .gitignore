@@ -1,0 +1,11 @@
+node_modules/
+.DS_Store
+Thumbs.db
+
+.ai/runtime/*.flag
+.ai/runtime/*.txt
+.ai/runtime/*.env
+.ai/runtime/smoke/
+
+.ai/ARCHIVE_LOCK
+.ai/PAUSE.md

@@ -1,0 +1,101 @@
+# Subagent Contracts
+
+Five mandatory subagents used by the loop phase. Each is dispatched via `runSubagent` with the corresponding prompt file from `.github/prompts/subagents/`.
+
+---
+
+## 1. Coder (`rw-loop-coder.subagent.md`)
+
+**Purpose**: Implement exactly one locked task using TDD discipline.
+
+**Inputs**: `LOCKED_TASK_ID`, `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`
+
+**Mandatory Workflow**:
+1. Read task fully (User Path, Acceptance Criteria, Accessibility Criteria, Verification).
+2. Write tests first for requested behavior.
+3. Run tests → confirm at least one targeted failure.
+4. Implement minimum code to pass tests.
+5. Re-run tests → confirm pass.
+6. Run verification commands from task file.
+7. Verify user entry wiring: feature reachable from existing navigation (UI/CLI/API).
+8. Append evidence log:
+   ```
+   VERIFICATION_EVIDENCE <LOCKED_TASK_ID> <UNIT|INTEGRATION|ACCEPTANCE>: command="<cmd>" exit_code=<code> key_output="<summary>"
+   ```
+
+**Evidence Requirements**:
+- One failing test evidence (exit_code != 0) before implementation
+- One passing test evidence (exit_code = 0) after implementation
+- One user-path verification evidence entry
+
+**Rules**: Complete only the locked task. Update exactly one task row. Commit with conventional message. Never call `runSubagent`.
+
+---
+
+## 2. Task Inspector (`rw-loop-task-inspector.subagent.md`)
+
+**Purpose**: Skeptically verify task completion against acceptance criteria + user path.
+
+**Inputs**: `LOCKED_TASK_ID`, task file, progress file, latest commit
+
+**Workflow**:
+1. Verify preflight (build/lint/test from task verification section).
+2. Validate all acceptance + accessibility criteria.
+3. Validate user accessibility path (feature reachable by user flow).
+
+**Output** (always emit both `TASK_INSPECTION` and `USER_PATH_GATE`):
+- Pass: `TASK_INSPECTION=PASS`, `USER_PATH_GATE=PASS`, append `REVIEW_OK`
+- Fail: `TASK_INSPECTION=FAIL`, `USER_PATH_GATE=PASS` if user path intact / `USER_PATH_GATE=FAIL` if broken, append `REVIEW_FAIL` + `REVIEW_FINDING <LOCKED_TASK_ID> <P0|P1|P2>|<file>|<line>|<rule>|<fix>`
+
+---
+
+## 3. Security Review (`rw-loop-security-review.subagent.md`)
+
+**Purpose**: Catch critical security regressions before task completion.
+
+**Triggers**: Always run for auth, tokens, secrets, credentials, permissions, roles, payment, user data, external APIs.
+
+**Checks**:
+- Hardcoded secrets/tokens
+- Missing authorization checks on privileged paths
+- Unsafe input handling (injection vectors)
+- Sensitive data leakage in logs/errors
+
+**Output**:
+- Pass: `SECURITY_GATE=PASS`, `SECURITY_FINDINGS=0`
+- Fail: `SECURITY_GATE=FAIL`, `SECURITY_FINDINGS=<n>`, append `SECURITY_FINDING <LOCKED_TASK_ID> <CRITICAL|HIGH|MEDIUM>|<file>|<line>|<rule>|<fix>`
+
+---
+
+## 4. Phase Inspector (`rw-loop-phase-inspector.subagent.md`)
+
+**Purpose**: Verify phase-level integration when all phase tasks complete.
+
+**Checks**:
+1. Phase-level coverage and integration between tasks.
+2. No unresolved `REVIEW-ESCALATE` lines.
+3. No task marked `blocked` in current phase.
+
+**Output**:
+- Pass: `PHASE_INSPECTION=PASS`, `PHASE_REVIEW_STATUS=APPROVED`
+- Fail (fixable): `PHASE_INSPECTION=FAIL`, `PHASE_REVIEW_STATUS=NEEDS_REVISION`
+- Fail (critical): `PHASE_INSPECTION=FAIL`, `PHASE_REVIEW_STATUS=FAILED`, append `REVIEW-ESCALATE`
+
+---
+
+## 5. Review (`rw-loop-review.subagent.md`)
+
+**Purpose**: Final completion/escalation decision when all tasks are done.
+
+**Output**:
+- `REVIEW_STATUS=OK` → success
+- `REVIEW_STATUS=FAIL` → fixable issue
+- `REVIEW_STATUS=ESCALATE` → critical blocker (3+ failures same task), append `REVIEW-ESCALATE`
+
+---
+
+## Common Rules for All Subagents
+
+- Never call `runSubagent` from within a subagent.
+- Keep findings factual and actionable.
+- Use exact token format for machine-readable output.

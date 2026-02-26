@@ -1,0 +1,118 @@
+---
+name: rw-planner
+description: "Lite+Contract planner: hybrid askQuestions + subagent planning + DAG/task-graph generation with approval integrity. Bootstraps .ai/ workspace on first run."
+argument-hint: "Feature request. Planner resolves required fields from request first, asks only missing fields, then deep-dive if ambiguous."
+---
+
+# RW Planner Skill
+
+Bootstrap workspace + hybrid interview → feature normalization → task decomposition → DAG/task-graph generation.
+
+## When to Use
+
+- Starting a new feature that needs structured decomposition
+- Re-planning after loop escalation (`NEXT_COMMAND=rw-planner`)
+- Reviewing or revising an existing plan
+
+## Procedure Overview
+
+```
+Phase 1: Bootstrap   → scaffold .ai/ dirs, subagent prompts, templates (first run only)
+Phase 2: Plan        → interview → feature → plan artifacts → atomic tasks
+Output:  NEXT_COMMAND=rw-loop
+```
+
+## Phase 1: Bootstrap
+
+Scaffold the workspace for first-time use. Skip items that already exist.
+
+1. Create directories:
+   - `.ai/features`, `.ai/tasks`, `.ai/notes`, `.ai/runtime`, `.ai/plans`, `.ai/memory`
+2. Create `.ai/CONTEXT.md` with the following default language policy:
+   ```markdown
+   # CONTEXT
+   - Response language: 한국어
+   - Machine tokens: English (pending, in-progress, completed, blocked, VERIFICATION_EVIDENCE, etc.)
+   - Section headers: English (unless overridden below)
+   ```
+3. Create `.ai/memory/shared-memory.md` (see [memory-contract.md](./assets/memory-contract.md)).
+4. Copy [feature-template.md](./assets/feature-template.md) to `.ai/features/FEATURE-TEMPLATE.md`.
+5. Create `.ai/PROGRESS.md` with initial format:
+   ```markdown
+   # Progress
+
+   ## Task Status
+   | Task | Title | Status | Commit |
+   |------|-------|--------|--------|
+
+   ## Phase Status
+   Current Phase: Phase 1
+
+   ## Log
+   ```
+6. Create `.ai/PLAN.md` with initial format:
+   ```markdown
+   # Plan
+   - PLAN_ID: (none)
+   - Feature Key: (none)
+   - Strategy: (none)
+   - Task Range: (none)
+   ```
+7. Validate `runSubagent` is available. If not, print `RW_ENV_UNSUPPORTED` and stop.
+8. Validate `askQuestions` is available. If not, print `INTERVIEW_REQUIRED` and stop.
+
+## Phase 2: Plan
+
+Load full planner contract: [planner-contract.md](./references/planner-contract.md)
+
+### Quick Reference
+
+1. **Step 0 Guard**: Validate `.ai/CONTEXT.md`, check for `.ai/PAUSE.md`, verify `runSubagent` + `askQuestions`.
+2. **Hybrid Intake** (via `askQuestions`):
+   - Phase A: Resolve `TARGET_KIND`, `USER_PATH`, `SCOPE_BOUNDARY`, `ACCEPTANCE_SIGNAL` from request. Ask only for missing fields.
+   - Phase B: Deep-dive (6–10 questions) if ambiguity remains.
+   - Phase C: Confirmation gate (one yes/no).
+   - Phase D: Ambiguity scoring (0–100 rubric) → select `PLAN_STRATEGY` (SINGLE or PARALLEL_AUTO).
+   - Phase E: Subagent planning — generate plan candidates via `runSubagent`, confirm selection.
+3. **Feature File**: Create/update under `.ai/features/` with approval metadata + SHA-256 hash integrity.
+4. **Approval Gate**: Feature must have `Approval: APPROVED`. Hash mismatch resets approval.
+5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/`.
+6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with acceptance criteria, user path, verification commands.
+7. **Update Progress**: Append task rows to `.ai/PROGRESS.md` as `pending`.
+
+### Planner Output Contract (success)
+
+```
+FEATURE_FILE=<path>
+FEATURE_KEY=<JIRA-123|FEATURE-XX>
+FEATURE_STATUS=PLANNED
+PLAN_ID=<id>
+PLAN_STRATEGY=<SINGLE|PARALLEL_AUTO>
+AMBIGUITY_SCORE=<0-100>
+AMBIGUITY_REASONS=<comma-separated-codes>
+PLAN_MODE=<INITIAL|REPLAN|EXTENSION>
+PLAN_TASK_RANGE=<TASK-XX~TASK-YY>
+TASK_BOOTSTRAP_FILE=<path>
+TASK_GRAPH_FILE=<path>
+PLAN_RISK_LEVEL=<LOW|MEDIUM|HIGH>
+PLAN_CONFIDENCE=<HIGH|MEDIUM|LOW>
+OPEN_QUESTIONS_COUNT=<n>
+NEXT_COMMAND=rw-loop
+```
+
+## Failure Handling
+
+| Token | Meaning | Next |
+|-------|---------|------|
+| `RW_ENV_UNSUPPORTED` | `runSubagent` unavailable | stop |
+| `TARGET_ROOT_INVALID` | workspace not writable | stop |
+| `INTERVIEW_REQUIRED` | `askQuestions` unavailable | stop |
+| `INTERVIEW_ABORTED` | user declined confirmation | stop |
+| `FEATURE_REVIEW_REQUIRED` | approval missing or hash changed | re-approve |
+| `PLAN_ARTIFACTS_INCOMPLETE` | required plan artifacts missing | retry |
+| `PAUSE_DETECTED` | `.ai/PAUSE.md` exists | remove pause file |
+
+## Language Policy
+
+- `.ai/CONTEXT.md` 부트스트랩 기본값: prose는 한국어, 머신 토큰은 영어.
+- 모든 `.ai/**` 아티팩트 작성 전 `.ai/CONTEXT.md`를 먼저 읽을 것.
