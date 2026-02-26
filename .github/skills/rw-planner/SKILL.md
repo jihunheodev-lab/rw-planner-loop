@@ -1,7 +1,6 @@
 ---
 name: rw-planner
-description: "Lite+Contract planner: hybrid askQuestions + subagent planning + DAG/task-graph generation with approval integrity. Bootstraps .ai/ workspace on first run."
-argument-hint: "Feature request. Planner resolves required fields from request first, asks only missing fields, then deep-dive if ambiguous."
+description: "Lite+Contract planner: hybrid askQuestions + subagent planning + DAG/task-graph generation with approval integrity. Bootstraps .ai/ workspace on first run. Input: feature request — resolves required fields first, asks only missing fields, then deep-dive if ambiguous."
 ---
 
 # RW Planner Skill
@@ -106,8 +105,11 @@ NEXT_COMMAND=rw-loop
 |-------|---------|------|
 | `RW_ENV_UNSUPPORTED` | `runSubagent` unavailable | stop |
 | `TARGET_ROOT_INVALID` | workspace not writable | stop |
+| `LANG_POLICY_MISSING` | `.ai/CONTEXT.md` unreadable after bootstrap | stop |
 | `INTERVIEW_REQUIRED` | `askQuestions` unavailable | stop |
 | `INTERVIEW_ABORTED` | user declined confirmation | stop |
+| `INTERVIEW_DEEP_REQUIRED` | deep dive still unresolved | retry |
+| `FEATURE_NEED_INSUFFICIENT` | scope still insufficient after confirmation | stop |
 | `FEATURE_REVIEW_REQUIRED` | approval missing or hash changed | re-approve |
 | `PLAN_ARTIFACTS_INCOMPLETE` | required plan artifacts missing | retry |
 | `PAUSE_DETECTED` | `.ai/PAUSE.md` exists | remove pause file |

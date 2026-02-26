@@ -10,9 +10,9 @@ Full deterministic contract for the planning phase of rw-planner-loop skill.
 4. Read `.ai/CONTEXT.md` first.
 5. If `.ai/CONTEXT.md` is missing/unreadable after bootstrap: print `LANG_POLICY_MISSING`, stop.
 6. If `.ai/PAUSE.md` exists: print `PAUSE_DETECTED`, stop.
-6. Ensure `runSubagent` is available. If unavailable: print `RW_ENV_UNSUPPORTED`, stop.
-7. Do not write product code. Allowed writes: `.ai/**` only.
-8. If `askQuestions` is unavailable: print `INTERVIEW_REQUIRED`, stop.
+7. Ensure `runSubagent` is available. If unavailable: print `RW_ENV_UNSUPPORTED`, stop.
+8. Do not write product code. Allowed writes: `.ai/**` only.
+9. If `askQuestions` is unavailable: print `INTERVIEW_REQUIRED`, stop.
 
 ## Failure Output Tokens
 

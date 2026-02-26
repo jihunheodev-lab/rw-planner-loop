@@ -1,7 +1,6 @@
 ---
 name: rw-loop
-description: "Lite+Contract loop: DAG-aware dispatch, TDD evidence checks, user-path/security gates, and phase review contracts"
-argument-hint: "Optional flags: --auto, --no-hitl, --hitl, --parallel, --max-parallel=<1..4>"
+description: "Lite+Contract loop: DAG-aware dispatch, TDD evidence checks, user-path/security gates, and phase review contracts. Optional flags: --auto, --no-hitl, --hitl, --parallel, --max-parallel=<1..4>"
 ---
 
 # RW Loop Skill
