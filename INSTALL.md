@@ -20,7 +20,7 @@ GitHub Copilot(VS Code)용 rw-planner + rw-loop 스킬 설치 가이드.
 ### Step 2: 파일 다운로드
 
 아래 URL에서 각 파일을 다운로드하여 해당 경로에 저장합니다.
-Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/main`
+Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/master`
 
 **rw-planner:**
 

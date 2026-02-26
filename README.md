@@ -10,7 +10,7 @@
 Copilot Chat에서 다음과 같이 말하세요:
 
 ```
-Fetch and follow instructions from https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/main/INSTALL.md
+Fetch and follow instructions from https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/master/INSTALL.md
 ```
 
 AI가 자동으로 12개 스킬 파일을 다운로드하여 프로젝트의 `.github/skills/`에 배치합니다.
