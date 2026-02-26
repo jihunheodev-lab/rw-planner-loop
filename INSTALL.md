@@ -1,14 +1,14 @@
 # Installing RW Planner Loop for GitHub Copilot
 
-GitHub Copilot(VS Code)용 rw-planner + rw-loop 스킬 설치 가이드.
+Installation guide for rw-planner + rw-loop skills on GitHub Copilot (VS Code).
 
-## AI 자동 설치 (권장)
+## Automated Installation (Recommended)
 
-이 문서를 읽고 있는 AI 에이전트에게: 아래 절차를 순서대로 실행하세요.
+AI agent reading this document: follow the steps below in order.
 
-### Step 1: 디렉토리 생성
+### Step 1: Create Directories
 
-프로젝트 루트 기준으로 다음 디렉토리를 생성합니다:
+Create the following directories relative to the project root:
 
 ```
 .github/skills/rw-planner/assets/
@@ -17,14 +17,14 @@ GitHub Copilot(VS Code)용 rw-planner + rw-loop 스킬 설치 가이드.
 .github/skills/rw-loop/references/
 ```
 
-### Step 2: 파일 다운로드
+### Step 2: Download Files
 
-아래 URL에서 각 파일을 다운로드하여 해당 경로에 저장합니다.
+Download each file from the URLs below and save them to the corresponding paths.
 Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/main`
 
 **rw-planner:**
 
-| URL 경로 | 저장 위치 |
+| URL Path | Save To |
 |---|---|
 | `/.github/skills/rw-planner/SKILL.md` | `.github/skills/rw-planner/SKILL.md` |
 | `/.github/skills/rw-planner/assets/feature-template.md` | `.github/skills/rw-planner/assets/feature-template.md` |
@@ -33,7 +33,7 @@ Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/mai
 
 **rw-loop:**
 
-| URL 경로 | 저장 위치 |
+| URL Path | Save To |
 |---|---|
 | `/.github/skills/rw-loop/SKILL.md` | `.github/skills/rw-loop/SKILL.md` |
 | `/.github/skills/rw-loop/assets/rw-loop-coder.subagent.md` | `.github/skills/rw-loop/assets/rw-loop-coder.subagent.md` |
@@ -44,22 +44,21 @@ Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/mai
 | `/.github/skills/rw-loop/references/loop-contract.md` | `.github/skills/rw-loop/references/loop-contract.md` |
 | `/.github/skills/rw-loop/references/subagent-contracts.md` | `.github/skills/rw-loop/references/subagent-contracts.md` |
 
-### Step 3: 검증
+### Step 3: Verify
 
-다운로드한 파일이 12개인지 확인합니다:
-- `rw-planner/`: SKILL.md + assets 2개 + references 1개 = 4개
-- `rw-loop/`: SKILL.md + assets 5개 + references 2개 = 8개
+Confirm that 12 files were downloaded:
+- `rw-planner/`: SKILL.md + 2 assets + 1 reference = 4 files
+- `rw-loop/`: SKILL.md + 5 assets + 2 references = 8 files
 
-### Step 4: 완료 보고
+### Step 4: Report
 
-사용자에게 설치 결과를 알려줍니다:
-- 설치 성공 시: "rw-planner-loop 스킬 설치 완료 (12개 파일). `@rw-planner`로 시작하세요."
-- 실패 시: 실패한 파일과 사유를 보고합니다.
+Report the installation result to the user:
+- On success: "rw-planner-loop skills installed (12 files). Start with `@rw-planner`."
+- On failure: report which files failed and why.
 
-## 수동 설치
+## Manual Installation
 
 ```bash
-# 저장소 클론 후 .github/skills/ 복사
 git clone https://github.com/jihunheodev-lab/rw-planner-loop.git /tmp/rw-planner-loop
 mkdir -p .github/skills
 cp -r /tmp/rw-planner-loop/.github/skills/rw-planner .github/skills/
@@ -69,7 +68,7 @@ rm -rf /tmp/rw-planner-loop
 
 ## Updating
 
-AI에게 다시 이 URL을 fetch하도록 요청하면 최신 버전으로 덮어씁니다.
+Ask the AI to fetch this URL again to overwrite with the latest version.
 
 ## Uninstalling
 
