@@ -9,10 +9,22 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 if [ -f "$ENV_FILE" ]; then
   while IFS= read -r line || [ -n "$line" ]; do
+    # Tolerate CRLF .env files and optional UTF-8 BOM
+    line="${line%$'\r'}"
     # Skip comments and blank lines
     case "$line" in \#*|'') continue ;; esac
+    # Ignore malformed lines without '='
+    case "$line" in *=*) ;; *) continue ;; esac
     key="${line%%=*}"
     val="${line#*=}"
+    key="${key#$'\ufeff'}"
+    # Trim surrounding whitespace on key only
+    key="${key#"${key%%[![:space:]]*}"}"
+    key="${key%"${key##*[![:space:]]}"}"
+    # Skip invalid env var names (prevents ${!key} errors)
+    if ! [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
+      continue
+    fi
     # Strip surrounding quotes
     val="${val#\"}"; val="${val%\"}"
     val="${val#\'}"; val="${val%\'}"
@@ -193,30 +205,30 @@ if [ "$DETAIL_LEVEL" != "short" ] && [ -n "$MSG" ] && [ -n "$TRANSCRIPT_PATH" ] 
   fi
 
   if [ -n "$PROJECT_NAME" ]; then
-    CONTEXT="${CONTEXT}\n📂 ${PROJECT_NAME}"
+    CONTEXT="${CONTEXT}"$'\n'"📂 ${PROJECT_NAME}"
   fi
   if [ -n "$CHAT_TITLE" ]; then
     TRUNC_TITLE=$(echo "$CHAT_TITLE" | cut -c1-40)
     [ ${#CHAT_TITLE} -gt 40 ] && TRUNC_TITLE="${TRUNC_TITLE}..."
-    CONTEXT="${CONTEXT}\n💬 ${TRUNC_TITLE}"
+    CONTEXT="${CONTEXT}"$'\n'"💬 ${TRUNC_TITLE}"
   elif [ -n "$FIRST_USER_MSG" ]; then
     TRUNC_FIRST=$(echo "$FIRST_USER_MSG" | cut -c1-30)
     [ ${#FIRST_USER_MSG} -gt 30 ] && TRUNC_FIRST="${TRUNC_FIRST}..."
-    CONTEXT="${CONTEXT}\n💬 \"${TRUNC_FIRST}\""
+    CONTEXT="${CONTEXT}"$'\n'"💬 \"${TRUNC_FIRST}\""
   fi
   if [ "$DETAIL_LEVEL" = "verbose" ]; then
     if [ -n "$SESSION_ID" ]; then
       SHORT_ID=$(echo "$SESSION_ID" | cut -c1-8)
-      CONTEXT="${CONTEXT}\n🏷 ${SHORT_ID}"
+      CONTEXT="${CONTEXT}"$'\n'"🏷 ${SHORT_ID}"
     fi
     if [ -n "$LAST_USER_MSG" ] && [ "$LAST_USER_MSG" != "$FIRST_USER_MSG" ]; then
       TRUNC_LAST=$(echo "$LAST_USER_MSG" | cut -c1-40)
       [ ${#LAST_USER_MSG} -gt 40 ] && TRUNC_LAST="${TRUNC_LAST}..."
-      CONTEXT="${CONTEXT}\n📝 \"${TRUNC_LAST}\""
+      CONTEXT="${CONTEXT}"$'\n'"📝 \"${TRUNC_LAST}\""
     fi
   fi
   if [ -n "$CONTEXT" ]; then
-    MSG="${MSG}$(printf "$CONTEXT")"
+    MSG="${MSG}${CONTEXT}"
   fi
 fi
 
