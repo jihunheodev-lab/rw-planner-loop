@@ -9,3 +9,5 @@ Thumbs.db
 
 .ai/ARCHIVE_LOCK
 .ai/PAUSE.md
+
+.github/hooks/.env
