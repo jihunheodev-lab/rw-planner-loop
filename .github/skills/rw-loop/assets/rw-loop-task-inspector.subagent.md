@@ -14,6 +14,7 @@ Rules:
 4) Validate runtime behavior gate:
    - runtime-visible behavior tasks must include runtime evidence artifacts for both normal flow and declared error flow (when error flow exists in acceptance).
    - UI tasks with error handling requirements must verify error state is user-visible (binding/rendering/label), not only present in service logic.
+   - if acceptance/user path specifies an actionable control surface (for example popup/page/modal/menu/CLI subcommand), verify the control exists on that exact surface unless an explicit accepted delta is documented.
 5) Always output all tokens: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`, `RUNTIME_GATE=PASS|FAIL`.
 6) If pass:
    - output `TASK_INSPECTION=PASS`

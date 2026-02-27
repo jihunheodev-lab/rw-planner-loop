@@ -33,8 +33,14 @@ Naming:
 - Verification command(s):
   - ...
 
+## Reference Baseline (Optional)
+- Source: <repo/path/url/doc>
+- Parity Required: YES | NO
+- Parity Scope:
+  - ...
+
 ## Planning Profile
-- STANDARD | FAST_TEST
+- STANDARD | FAST_TEST | UX_STRICT
 
 ## Status
 - READY_FOR_PLAN | PLANNED
@@ -49,6 +55,7 @@ Naming:
 - [ ] User path is concrete and testable
 - [ ] In/Out scope boundaries are explicit
 - [ ] Acceptance signal includes executable verification
+- [ ] If `Parity Required: YES`, reference parity matrix is defined
 - [ ] Approver identity and date are filled
 ```
 

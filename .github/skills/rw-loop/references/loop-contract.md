@@ -37,6 +37,10 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
    - `total`: monotonic lifetime counter, never decremented, used for `dispatch_id`.
    - `active`: current unresolved counter, used for block/escalation thresholds.
    - Reset `active` counters to `0` when the task reaches `completed` with passing gates.
+12. Resolve `PLANNING_PROFILE` for active feature:
+   - source: active feature file linked by `.ai/PLAN.md` / feature key
+   - default: `STANDARD` when missing
+   - allowed values: `STANDARD`, `FAST_TEST`, `UX_STRICT`
 
 ## Mode Resolution
 
@@ -227,12 +231,20 @@ For each dispatched task:
 - On `OK`: proceed to success output.
 - On `FAIL`/`ESCALATE`: stop with appropriate `NEXT_COMMAND`.
 
-## Optional User Acceptance Checklist
+## User Acceptance Checklist Gate
 
 - Trigger when all tasks completed and `REVIEW_STATUS=OK`.
 - Create `.ai/plans/<PLAN_ID>/user-acceptance-checklist.md`.
 - Content: how-to-run commands, expected results, failure hints.
-- Advisory only — never blocks `NEXT_COMMAND`.
+- `PLANNING_PROFILE=STANDARD|FAST_TEST`: advisory only (non-blocking), set `USER_ACCEPTANCE_GATE=NA`.
+- `PLANNING_PROFILE=UX_STRICT`: blocking gate.
+  - Require checklist exists and contains runtime verification steps for main user path + error path.
+  - If `HITL_MODE=ON`, call `askQuestions` to confirm checklist run:
+    - Header: "사용자 수용 확인"
+    - Question: "체크리스트를 실제로 확인했나요? UX_STRICT 게이트를 통과하고 완료할까요?"
+    - Options: "예, 통과합니다" (recommended), "아니요, 재검토합니다"
+  - If declined or checklist is incomplete: output `USER_ACCEPTANCE_GATE=FAIL`, print `USER_ACCEPTANCE_GATE_FAILED`, stop with `NEXT_COMMAND=rw-loop`.
+  - If passed: output `USER_ACCEPTANCE_GATE=PASS`.
 
 ## Contract Tokens
 
@@ -250,6 +262,7 @@ PHASE_INSPECTION=PASS|FAIL
 PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED
 REVIEW_STATUS=OK|FAIL|ESCALATE
 HITL_PHASE_APPROVED=YES|NO
+USER_ACCEPTANCE_GATE=PASS|FAIL|NA
 ```
 
 ## HITL Enforcement Rules
@@ -268,10 +281,12 @@ Emit in exact order:
 HITL_MODE=<ON|OFF>
 PARALLEL_MODE=<ON|OFF>
 PARALLEL_BATCH_SIZE=<1-4>
+PLANNING_PROFILE=<STANDARD|FAST_TEST|UX_STRICT>
 RUNSUBAGENT_DISPATCH_COUNT=<n>
 RUN_PHASE_NOTE_FILE=<path|none>
 PHASE_REVIEW_STATUS=<APPROVED|NEEDS_REVISION|FAILED|NA>
 REVIEW_STATUS=<OK|FAIL|ESCALATE>
+USER_ACCEPTANCE_GATE=<PASS|FAIL|NA>
 ARCHIVE_RESULT=<SKIPPED|DONE|LOCKED>
 NEXT_COMMAND=<done|rw-planner|rw-loop>
 ```

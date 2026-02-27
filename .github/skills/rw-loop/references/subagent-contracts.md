@@ -52,6 +52,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 4. Validate runtime behavior gate:
    - runtime-visible behavior tasks must include runtime evidence artifact(s)
    - if acceptance includes error handling, verify error state is user-visible in UI/UX path
+   - if acceptance/user path specifies an actionable control surface, verify implementation keeps that surface (or document accepted delta)
 
 **Output** (always emit all three tokens):
 - Pass: `TASK_INSPECTION=PASS`, `USER_PATH_GATE=PASS`, `RUNTIME_GATE=PASS`, append `REVIEW_OK`
@@ -117,6 +118,8 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 **Rule**: Before emitting `REVIEW_STATUS=OK`, run every command listed under `Final Gate Verification Commands` in `TASK-00-READBEFORE.md`.
 - If section is missing/empty (legacy plan), infer best available full regression set (project-wide build + full test + key user-path smoke) and run those.
 - Any non-zero exit must emit `REVIEW_STATUS=FAIL`.
+
+**Orchestrator follow-up**: when active `PLANNING_PROFILE=UX_STRICT`, completion still requires blocking `USER_ACCEPTANCE_GATE=PASS` after review.
 
 ---
 

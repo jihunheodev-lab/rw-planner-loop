@@ -89,6 +89,7 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
    - **[HITL MANDATORY]** If `HITL_MODE=ON`: output structured phase summary (completed tasks + evidence + inspector findings + 직접 확인 방법) THEN call `askQuestions` — unconditionally, never skip.
 8. **3-strike rule**: same task `strike.active` reaches 3 → blocked + escalate to planner. `strike.total`/`security.total` stay cumulative for history IDs, and `active` counters reset on successful completion.
 9. **Review Gate** (all tasks complete): run `TASK-00` final-gate full verification commands, then require `REVIEW_STATUS=OK|FAIL|ESCALATE`.
+10. **User Acceptance Gate**: if `PLANNING_PROFILE=UX_STRICT`, `user-acceptance-checklist.md` becomes blocking and must pass `USER_ACCEPTANCE_GATE=PASS`.
 
 ## State Transitions
 
@@ -111,10 +112,12 @@ pending → in-progress → completed
 HITL_MODE=<ON|OFF>
 PARALLEL_MODE=<ON|OFF>
 PARALLEL_BATCH_SIZE=<1-4>
+PLANNING_PROFILE=<STANDARD|FAST_TEST|UX_STRICT>
 RUNSUBAGENT_DISPATCH_COUNT=<n>
 RUN_PHASE_NOTE_FILE=<path|none>
 PHASE_REVIEW_STATUS=<APPROVED|NEEDS_REVISION|FAILED|NA>
 REVIEW_STATUS=<OK|FAIL|ESCALATE>
+USER_ACCEPTANCE_GATE=<PASS|FAIL|NA>
 ARCHIVE_RESULT=<SKIPPED|DONE|LOCKED>
 NEXT_COMMAND=<done|rw-planner|rw-loop>
 ```
@@ -130,6 +133,7 @@ NEXT_COMMAND=<done|rw-planner|rw-loop>
 | `LANG_POLICY_MISSING` | `.ai/CONTEXT.md` missing | run rw-planner |
 | `TASK_DEPENDENCY_BLOCKED` | no dispatchable task | replan |
 | `SECURITY_GATE_FAILED` | security regression found | fix + re-run |
+| `USER_ACCEPTANCE_GATE_FAILED` | UX_STRICT acceptance checklist gate failed | fix UX + re-run |
 | `PAUSE_DETECTED` | `.ai/PAUSE.md` exists | remove pause file |
 
 ## Language Policy

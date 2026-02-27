@@ -68,15 +68,15 @@ Load full planner contract: [planner-contract.md](./references/planner-contract.
 
 1. **Step 0 Guard**: Validate `.ai/CONTEXT.md`, check for `.ai/PAUSE.md`, verify `runSubagent` + `askQuestions`.
 2. **Hybrid Intake** (via `askQuestions`):
-   - Phase A: Resolve `TARGET_KIND`, `USER_PATH`, `SCOPE_BOUNDARY`, `ACCEPTANCE_SIGNAL`(Gate A/B) from request. Ask only for missing fields.
+   - Phase A: Resolve `TARGET_KIND`, `USER_PATH`, `SCOPE_BOUNDARY`, `PLANNING_PROFILE`, `ACCEPTANCE_SIGNAL`(Gate A/B), `REFERENCE_BASELINE/PARITY_REQUIRED` from request. Ask only for missing fields.
    - Phase B: Deep-dive (6–10 questions) if ambiguity remains.
    - Phase C: Confirmation gate (one yes/no).
    - Phase D: Ambiguity scoring (0–100 rubric) → select `PLAN_STRATEGY` (SINGLE or PARALLEL_AUTO).
    - Phase E: Subagent planning — generate plan candidates via `runSubagent`, confirm selection.
 3. **Feature File**: Create/update under `.ai/features/` with approval metadata + SHA-256 hash integrity.
 4. **Approval Gate**: Feature must have `Approval: APPROVED`. Hash mismatch resets approval.
-5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/` (`task-graph` nodes must start with `status: pending`).
-6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with frontmatter `status: pending`, acceptance criteria, user path, and fast task-scoped verification commands. Same-phase tasks must be independent by default; add dependency edges only with explicit rationale. Put full regression commands in `TASK-00` phase/final gate policy, and define `Environment Preflight Requirements` + runtime evidence expectations for user-visible tasks.
+5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/` (`task-graph` nodes must start with `status: pending`). If parity is required, `reference-parity.md` is mandatory (use `assets/reference-parity-template.md`).
+6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with frontmatter `status: pending`, acceptance criteria, user path, and fast task-scoped verification commands. Same-phase tasks must be independent by default; add dependency edges only with explicit rationale. Put full regression commands in `TASK-00` phase/final gate policy, define `Environment Preflight Requirements` + runtime evidence expectations for user-visible tasks, and map user-visible tasks to parity element IDs when parity is required.
 7. **Update Progress**: Append task rows to `.ai/PROGRESS.md` as `pending`.
 
 ### Planner Output Contract (success)
@@ -114,6 +114,7 @@ Do not start implementation, do not dispatch rw-loop internally, and do not modi
 | `INTERVIEW_DEEP_REQUIRED` | deep dive still unresolved | retry |
 | `FEATURE_NEED_INSUFFICIENT` | scope still insufficient after confirmation | stop |
 | `FEATURE_REVIEW_REQUIRED` | approval missing or hash changed | re-approve |
+| `REFERENCE_PARITY_INCOMPLETE` | parity artifact missing/incomplete | fix parity matrix |
 | `PLAN_ARTIFACTS_INCOMPLETE` | required plan artifacts missing | retry |
 | `PAUSE_DETECTED` | `.ai/PAUSE.md` exists | remove pause file |
 

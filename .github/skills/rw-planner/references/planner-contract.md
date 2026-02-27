@@ -32,6 +32,7 @@ One primary error token + `NEXT_COMMAND=rw-planner`:
 | `FEATURES_DIR_MISSING` | `.ai/features/` directory not found |
 | `FEATURE_FILE_MISSING` | Expected feature file not found |
 | `FEATURE_NOT_READY` | Feature status not `READY_FOR_PLAN` |
+| `REFERENCE_PARITY_INCOMPLETE` | Parity requested but parity artifact is missing/incomplete |
 | `PLAN_ARTIFACTS_INCOMPLETE` | Required plan artifacts missing/empty |
 | `RW_ENV_UNSUPPORTED` | `runSubagent` unavailable |
 
@@ -44,9 +45,12 @@ One primary error token + `NEXT_COMMAND=rw-planner`:
    - `TARGET_KIND`: `PRODUCT_CODE` (default) or `AGENT_WORKFLOW`
    - `USER_PATH`: how end user reaches/uses the feature
    - `SCOPE_BOUNDARY`: explicit in-scope and out-of-scope
+   - `PLANNING_PROFILE`: `STANDARD` (default), `FAST_TEST`, or `UX_STRICT`
    - `ACCEPTANCE_SIGNAL`: dual-gate acceptance
-     - Gate A: state/build/test/document consistency checks
-     - Gate B: runtime-visible behavior checks (normal flow + declared error flow when applicable)
+      - Gate A: state/build/test/document consistency checks
+      - Gate B: runtime-visible behavior checks (normal flow + declared error flow when applicable)
+   - `REFERENCE_BASELINE` (optional): source repo/path/url/doc when user asks for parity/reference-equivalent behavior
+   - `PARITY_REQUIRED`: `YES|NO` (default `NO`; set `YES` when request explicitly asks for parity/equivalence with a reference)
 3. Defaulting rule for `TARGET_KIND`:
    - Default to `PRODUCT_CODE`.
    - Use `AGENT_WORKFLOW` only when request explicitly targets agent/prompt/orchestration assets.
@@ -79,13 +83,14 @@ Compute `AMBIGUITY_SCORE` (cap at 100):
 | `USER_PATH` missing/uncertain | +25 |
 | `SCOPE_BOUNDARY` missing/uncertain | +20 |
 | `ACCEPTANCE_SIGNAL` missing/non-testable | +20 |
+| `PARITY_REQUIRED=YES` but `REFERENCE_BASELINE` missing/uncertain | +15 |
 | Target path/file not specified | +10 |
 | Generic verbs only (improve/add/fix without scope) | +10 |
 | Broad expressions (overall, global, optimize all) | +5 |
 | Impact spans 3+ directories | +10 |
 | Security/data concern unresolved | +15 |
 
-Ambiguity reason codes: `TARGET_KIND_UNCLEAR`, `USER_PATH_UNCLEAR`, `SCOPE_UNCLEAR`, `ACCEPTANCE_UNCLEAR`, `TARGET_PATH_MISSING`, `GENERIC_VERB_REQUEST`, `BROAD_SCOPE_WORDING`, `CROSS_DIR_IMPACT`, `SECURITY_DATA_UNCLEAR`.
+Ambiguity reason codes: `TARGET_KIND_UNCLEAR`, `USER_PATH_UNCLEAR`, `SCOPE_UNCLEAR`, `ACCEPTANCE_UNCLEAR`, `REFERENCE_PARITY_UNCLEAR`, `TARGET_PATH_MISSING`, `GENERIC_VERB_REQUEST`, `BROAD_SCOPE_WORDING`, `CROSS_DIR_IMPACT`, `SECURITY_DATA_UNCLEAR`.
 
 Strategy selection:
 - Hard trigger → `PARALLEL_AUTO` when any required field remains unclear.
@@ -111,6 +116,10 @@ Strategy selection:
 1. Create/select feature file under `.ai/features/`.
    - Naming: `<ISSUE_KEY>-<slug>.md` or `FEATURE-XX-<slug>.md`.
    - Set `Status: READY_FOR_PLAN`.
+   - If parity/equivalence is requested, populate `## Reference Baseline` with:
+     - `Source`
+     - `Parity Required: YES`
+     - `Parity Scope`
 2. Approval metadata:
    - `Approval: PENDING|APPROVED`
    - `Approved By: <name-or-id>`
@@ -150,9 +159,12 @@ Strategy selection:
    - Same-phase tasks must be independent by default to maximize DAG width.
    - Add dependency edges only when ordering/data dependency is required for correctness or user-path validity.
    - When independent siblings exist, `parallel_groups` must include them.
+   - If `PARITY_REQUIRED=YES`: `.ai/plans/<PLAN_ID>/reference-parity.md` (reference UX/behavior parity matrix; seed from `.github/skills/rw-planner/assets/reference-parity-template.md`)
    - `.ai/runtime/rw-active-plan-id.txt`
    - `.ai/PLAN.md`
 6. Verify artifact completeness: `plan-summary.yaml`, `task-graph.yaml`, at least one `research_findings_*.yaml` must exist and be non-empty.
+   - If `PARITY_REQUIRED=YES`, require `reference-parity.md` exists and includes at least one parity row.
+   - If parity artifact is missing/incomplete: print `REFERENCE_PARITY_INCOMPLETE`, stop.
    - If incomplete: print `PLAN_ARTIFACTS_INCOMPLETE`, stop.
 
 ## Task Decomposition
@@ -177,9 +189,11 @@ Strategy selection:
    - Files to Create/Modify
    - Test Strategy, Verification (`Verification` must be task-scoped/fast and must not duplicate full project regression commands unless strictly required by task scope)
    - For user-visible behavior tasks, `Verification` must include runtime checks:
-     - one normal-flow runtime command
-     - one error-flow runtime command when an error path is declared
-     - expected runtime evidence artifact path(s) (log/screenshot/output file)
+      - one normal-flow runtime command
+      - one error-flow runtime command when an error path is declared
+      - expected runtime evidence artifact path(s) (log/screenshot/output file)
+   - If `PLANNING_PROFILE=UX_STRICT`, include explicit UX checklist hooks in tasks (for final blocking user acceptance gate).
+   - If `PARITY_REQUIRED=YES`, each user-visible task must reference covered parity element IDs (for traceability to `reference-parity.md`).
    - Strike History Reference (optional): path to prior `.ai/runtime/strikes/<TASK-XX>-strikes.md` when replanning a previously blocked task
 3. Update `.ai/PROGRESS.md`:
    - Append new task rows as `pending`.
