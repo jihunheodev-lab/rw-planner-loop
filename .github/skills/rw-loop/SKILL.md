@@ -1,6 +1,6 @@
 ---
 name: rw-loop
-description: "Lite+Contract loop: DAG-aware dispatch, TDD evidence checks, user-path/security gates, and phase review contracts. Optional flags: --auto, --no-hitl, --hitl, --parallel, --max-parallel=<1..4>"
+description: "Lite+Contract loop: DAG-aware dispatch, TDD evidence checks, dual quality gates (state/runtime), env preflight, and phase review contracts. Optional flags: --auto, --no-hitl, --hitl, --parallel, --max-parallel=<1..4>"
 ---
 
 # RW Loop Skill
@@ -21,6 +21,7 @@ The following must exist before running this skill (created by `rw-planner`):
 - `.ai/tasks/` — atomic task files (`TASK-XX-*.md`)
 - `.ai/runtime/rw-active-plan-id.txt` + `.ai/plans/<PLAN_ID>/task-graph.yaml` — DAG + node status source
 - `.github/skills/rw-loop/assets/` — 5 subagent prompt files
+- `.github/skills/rw-loop/scripts/check_state_sync.py` + `env_preflight.py` — pre-dispatch guards
 
 If any prerequisite is missing, the skill prints a failure token and stops.
 
@@ -47,6 +48,10 @@ End:    Review    → final review gate → success output
    - If any file is missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
 6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
 7. Read `.ai/runtime/rw-active-plan-id.txt`, then read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph. If missing/unreadable: print `TARGET_ROOT_INVALID`, stop.
+8. Verify required scripts exist:
+   - `.github/skills/rw-loop/scripts/check_state_sync.py`
+   - `.github/skills/rw-loop/scripts/env_preflight.py`
+   - If any file is missing: print `TARGET_ROOT_INVALID`, stop.
 
 ## Mode Resolution
 
@@ -70,12 +75,15 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
 1a. Run state sync checker before dispatch:
    - `python .github/skills/rw-loop/scripts/check_state_sync.py`
    - If checker returns fail tokens, stop and fix state artifacts first.
+1b. Run environment preflight before dispatch:
+   - `python .github/skills/rw-loop/scripts/env_preflight.py`
+   - Require `ENV_PREFLIGHT=PASS`. On fail, stop and fix env/dependencies first.
 2. **Select dispatchable task(s)** from DAG (`in-progress` first, then `pending`, never `blocked`).
    - Single mode: 1 task. Parallel mode: up to `MAX_PARALLEL` independent tasks (default `4`).
 3. **Dispatch** to coder subagent via `runSubagent`.
-4. **Validate**: completion delta (exactly N tasks), correct task IDs, evidence count increased, and state sync across `PROGRESS` + task frontmatter + `task-graph`.
+4. **Validate (Gate A)**: completion delta (exactly N tasks), correct task IDs, evidence count increased, and state sync across `PROGRESS` + task frontmatter + `task-graph`.
    - Task-level verification should stay scoped/fast. Full regression belongs to Phase/Review gates via `TASK-00` policy.
-5. **Task Inspector Gate**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
+5. **Task Inspector Gate (Gate B 포함)**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`, `RUNTIME_GATE=PASS|FAIL`.
 6. **Security Gate**: `SECURITY_GATE=PASS|FAIL`.
 7. **Phase Inspector** (when phase complete): run `TASK-00` phase-gate full verification commands, then require `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
    - **[HITL MANDATORY]** If `HITL_MODE=ON`: output structured phase summary (completed tasks + evidence + inspector findings + 직접 확인 방법) THEN call `askQuestions` — unconditionally, never skip.
@@ -94,6 +102,7 @@ pending → in-progress → completed
 - Single mode: 1 dispatch = exactly 1 task completed.
 - Parallel mode: N dispatched = exactly N completed.
 - `completed` requires `VERIFICATION_EVIDENCE` count increase.
+- Runtime-visible behavior tasks require runtime evidence artifact(s) and `RUNTIME_GATE=PASS`.
 - `completed → pending` forbidden unless explicit review rollback.
 
 ## Loop Output Contract (success)

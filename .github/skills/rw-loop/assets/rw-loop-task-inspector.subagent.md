@@ -11,15 +11,20 @@ Rules:
 2) Validate all acceptance criteria in task file.
 3) Validate user accessibility path:
    - the implemented feature must be reachable by a user flow.
-4) Always output both tokens: `TASK_INSPECTION=PASS|FAIL` and `USER_PATH_GATE=PASS|FAIL`.
-5) If pass:
+4) Validate runtime behavior gate:
+   - runtime-visible behavior tasks must include runtime evidence artifacts for both normal flow and declared error flow (when error flow exists in acceptance).
+   - UI tasks with error handling requirements must verify error state is user-visible (binding/rendering/label), not only present in service logic.
+5) Always output all tokens: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`, `RUNTIME_GATE=PASS|FAIL`.
+6) If pass:
    - output `TASK_INSPECTION=PASS`
    - output `USER_PATH_GATE=PASS`
+   - output `RUNTIME_GATE=PASS`
    - append `REVIEW_OK <LOCKED_TASK_ID>: <summary>` to log
-6) If fail:
+7) If fail:
    - output `TASK_INSPECTION=FAIL`
    - output `USER_PATH_GATE=PASS` if user path is intact, `USER_PATH_GATE=FAIL` if broken or missing
+   - output `RUNTIME_GATE=PASS` only when runtime gate is satisfied, otherwise `RUNTIME_GATE=FAIL`
    - append `REVIEW_FAIL <LOCKED_TASK_ID>: <summary>`
    - append one or more:
      - `REVIEW_FINDING <LOCKED_TASK_ID> <P0|P1|P2>|<file>|<line>|<rule>|<fix>`
-6) Never call `runSubagent`.
+8) Never call `runSubagent`.

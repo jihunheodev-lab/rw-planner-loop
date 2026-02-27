@@ -68,7 +68,7 @@ Load full planner contract: [planner-contract.md](./references/planner-contract.
 
 1. **Step 0 Guard**: Validate `.ai/CONTEXT.md`, check for `.ai/PAUSE.md`, verify `runSubagent` + `askQuestions`.
 2. **Hybrid Intake** (via `askQuestions`):
-   - Phase A: Resolve `TARGET_KIND`, `USER_PATH`, `SCOPE_BOUNDARY`, `ACCEPTANCE_SIGNAL` from request. Ask only for missing fields.
+   - Phase A: Resolve `TARGET_KIND`, `USER_PATH`, `SCOPE_BOUNDARY`, `ACCEPTANCE_SIGNAL`(Gate A/B) from request. Ask only for missing fields.
    - Phase B: Deep-dive (6–10 questions) if ambiguity remains.
    - Phase C: Confirmation gate (one yes/no).
    - Phase D: Ambiguity scoring (0–100 rubric) → select `PLAN_STRATEGY` (SINGLE or PARALLEL_AUTO).
@@ -76,7 +76,7 @@ Load full planner contract: [planner-contract.md](./references/planner-contract.
 3. **Feature File**: Create/update under `.ai/features/` with approval metadata + SHA-256 hash integrity.
 4. **Approval Gate**: Feature must have `Approval: APPROVED`. Hash mismatch resets approval.
 5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/` (`task-graph` nodes must start with `status: pending`).
-6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with frontmatter `status: pending`, acceptance criteria, user path, and fast task-scoped verification commands. Same-phase tasks must be independent by default; add dependency edges only with explicit rationale. Put full regression commands in `TASK-00` phase/final gate policy.
+6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with frontmatter `status: pending`, acceptance criteria, user path, and fast task-scoped verification commands. Same-phase tasks must be independent by default; add dependency edges only with explicit rationale. Put full regression commands in `TASK-00` phase/final gate policy, and define `Environment Preflight Requirements` + runtime evidence expectations for user-visible tasks.
 7. **Update Progress**: Append task rows to `.ai/PROGRESS.md` as `pending`.
 
 ### Planner Output Contract (success)

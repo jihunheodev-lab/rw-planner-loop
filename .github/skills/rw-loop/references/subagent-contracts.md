@@ -18,11 +18,12 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 5. Re-run tests → confirm pass.
 6. Run task-level verification commands from task file (scoped/fast checks for this task only).
 7. Verify user entry wiring: feature reachable from existing navigation (UI/CLI/API).
-8. Transition `LOCKED_TASK_ID` status from `in-progress` to `completed` in all synchronized state artifacts in the same dispatch cycle:
+8. For runtime-visible behavior tasks, run runtime scenario command(s) from Verification and capture artifact path(s).
+9. Transition `LOCKED_TASK_ID` status from `in-progress` to `completed` in all synchronized state artifacts in the same dispatch cycle:
    - `.ai/PROGRESS.md` task row `Status`
    - task file frontmatter `status`
    - `task-graph.yaml` node `status`
-9. Append evidence log:
+10. Append evidence log:
    ```
    VERIFICATION_EVIDENCE <LOCKED_TASK_ID> <UNIT|INTEGRATION|ACCEPTANCE>: command="<cmd>" exit_code=<code> key_output="<summary>"
    ```
@@ -31,6 +32,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 - One failing test evidence (exit_code != 0) before implementation
 - One passing test evidence (exit_code = 0) after implementation
 - One user-path verification evidence entry
+- For runtime-visible behavior tasks: one runtime evidence entry with artifact path(s)
 
 **Rules**: Complete only the locked task. Update status for exactly one locked task across synchronized state artifacts. Do not mutate `.ai/runtime/rw-strike-state.yaml`. Commit with conventional message. Never call `runSubagent`. Always append one line:
 `APPROACH_SUMMARY <LOCKED_TASK_ID>: "<single-line summary>"` (max 200 chars, no newlines, escape inner `"` as `\"`).
@@ -47,10 +49,13 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 1. Verify preflight using task-level verification commands from task verification section (scoped/fast checks).
 2. Validate all acceptance + accessibility criteria.
 3. Validate user accessibility path (feature reachable by user flow).
+4. Validate runtime behavior gate:
+   - runtime-visible behavior tasks must include runtime evidence artifact(s)
+   - if acceptance includes error handling, verify error state is user-visible in UI/UX path
 
-**Output** (always emit both `TASK_INSPECTION` and `USER_PATH_GATE`):
-- Pass: `TASK_INSPECTION=PASS`, `USER_PATH_GATE=PASS`, append `REVIEW_OK`
-- Fail: `TASK_INSPECTION=FAIL`, `USER_PATH_GATE=PASS` if user path intact / `USER_PATH_GATE=FAIL` if broken, append `REVIEW_FAIL` + `REVIEW_FINDING <LOCKED_TASK_ID> <P0|P1|P2>|<file>|<line>|<rule>|<fix>`
+**Output** (always emit all three tokens):
+- Pass: `TASK_INSPECTION=PASS`, `USER_PATH_GATE=PASS`, `RUNTIME_GATE=PASS`, append `REVIEW_OK`
+- Fail: `TASK_INSPECTION=FAIL`, `USER_PATH_GATE=PASS` if user path intact / `USER_PATH_GATE=FAIL` if broken, `RUNTIME_GATE=PASS|FAIL` by runtime evidence status, append `REVIEW_FAIL` + `REVIEW_FINDING <LOCKED_TASK_ID> <P0|P1|P2>|<file>|<line>|<rule>|<fix>`
 
 ---
 
@@ -117,7 +122,9 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 ## Common Rules for All Subagents
 
-- Loop orchestrator must run `python .github/skills/rw-loop/scripts/check_state_sync.py` before dispatch (preflight).
+- Loop orchestrator must run both before dispatch (preflight):
+  - `python .github/skills/rw-loop/scripts/check_state_sync.py`
+  - `python .github/skills/rw-loop/scripts/env_preflight.py`
 - Never call `runSubagent` from within a subagent.
 - Keep findings factual and actionable.
 - Use exact token format for machine-readable output.

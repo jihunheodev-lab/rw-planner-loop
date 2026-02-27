@@ -15,10 +15,14 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
    - `.github/skills/rw-loop/assets/rw-loop-phase-inspector.subagent.md`
    - `.github/skills/rw-loop/assets/rw-loop-review.subagent.md`
    - If missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
-6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
-7. Read `.ai/runtime/rw-active-plan-id.txt`, then read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph. If either file is missing/unreadable, print `TARGET_ROOT_INVALID`, stop.
-8. Load `.ai/runtime/rw-strike-state.yaml` if present. If missing, initialize counters in memory and create it on first strike/security record.
-9. Maintain strike state using this schema (per task):
+6. Ensure required preflight scripts exist:
+   - `.github/skills/rw-loop/scripts/check_state_sync.py`
+   - `.github/skills/rw-loop/scripts/env_preflight.py`
+   - If missing: print `TARGET_ROOT_INVALID`, stop.
+7. If `.ai/memory/shared-memory.md` exists, read it before loop start.
+8. Read `.ai/runtime/rw-active-plan-id.txt`, then read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph. If either file is missing/unreadable, print `TARGET_ROOT_INVALID`, stop.
+9. Load `.ai/runtime/rw-strike-state.yaml` if present. If missing, initialize counters in memory and create it on first strike/security record.
+10. Maintain strike state using this schema (per task):
    ```yaml
    tasks:
      TASK-XX:
@@ -29,7 +33,7 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
          total: 0
          active: 0
    ```
-10. Counter semantics:
+11. Counter semantics:
    - `total`: monotonic lifetime counter, never decremented, used for `dispatch_id`.
    - `active`: current unresolved counter, used for block/escalation thresholds.
    - Reset `active` counters to `0` when the task reaches `completed` with passing gates.
@@ -67,7 +71,11 @@ When `PARALLEL_MODE=ON` and `--max-parallel` is omitted, `MAX_PARALLEL=4`.
 - Task priority: `in-progress` first, then `pending`. Never auto-select `blocked`.
 - Single mode: one dispatch = exactly one task completed.
 - Parallel mode: N dispatched = exactly N completed. Only independent tasks (no dependency relation).
+- Dual quality gates:
+  - Gate A (state contract): completion delta + state sync + evidence count.
+  - Gate B (product behavior): runtime scenario evidence for user-observable behavior and error path.
 - Every completed task must increase verification evidence count.
+- Runtime-visible tasks must include runtime evidence artifact paths (for example screenshot/log/output file paths) in `VERIFICATION_EVIDENCE`.
 - Task-level verification is scoped/fast per task. Full project regression checks run at phase/final gates using `TASK-00-READBEFORE.md` policy.
 - Every transition for `LOCKED_TASK_ID` must update synchronized state artifacts in the same dispatch cycle.
 - State transitions:
@@ -88,6 +96,10 @@ When `PARALLEL_MODE=ON` and `--max-parallel` is omitted, `MAX_PARALLEL=4`.
 1b. Run state sync checker before selecting tasks:
    - `python .github/skills/rw-loop/scripts/check_state_sync.py`
    - Require: `STATE_SYNC_CHECK=PASS`.
+   - On fail: print checker output and stop current loop cycle.
+1c. Run environment preflight before selecting tasks:
+   - `python .github/skills/rw-loop/scripts/env_preflight.py`
+   - Require: `ENV_PREFLIGHT=PASS`.
    - On fail: print checker output and stop current loop cycle.
 2. Resolve locked task set from `task-graph.yaml` (primary), cross-checking `PROGRESS` + task frontmatter:
    - `PARALLEL_MODE=OFF`: one `LOCKED_TASK_ID`
@@ -112,11 +124,13 @@ For each dispatched task:
 2. Completed task IDs must exactly match locked task IDs.
 3. Evidence count for each task must increase.
 4. Locked task status must be `completed` in all synchronized state artifacts.
-5. On count/set mismatch: print `RW_SUBAGENT_COMPLETION_DELTA_INVALID`, stop.
-6. On wrong task: print `RW_SUBAGENT_COMPLETED_WRONG_TASK`, stop.
-7. On missing evidence: print `RW_SUBAGENT_VERIFICATION_EVIDENCE_MISSING`, stop.
-8. On state mismatch: print `RW_SUBAGENT_STATE_SYNC_INVALID`, stop.
-9. Print `RUNSUBAGENT_DISPATCH_OK <TASK-XX>` per task on success.
+5. For runtime-visible tasks, runtime evidence artifact path must be present in `VERIFICATION_EVIDENCE` key output.
+6. On count/set mismatch: print `RW_SUBAGENT_COMPLETION_DELTA_INVALID`, stop.
+7. On wrong task: print `RW_SUBAGENT_COMPLETED_WRONG_TASK`, stop.
+8. On missing evidence: print `RW_SUBAGENT_VERIFICATION_EVIDENCE_MISSING`, stop.
+9. On state mismatch: print `RW_SUBAGENT_STATE_SYNC_INVALID`, stop.
+10. On missing runtime evidence for runtime-visible task: print `RW_SUBAGENT_VERIFICATION_EVIDENCE_MISSING`, stop.
+11. Print `RUNSUBAGENT_DISPATCH_OK <TASK-XX>` per task on success.
 
 ## Mandatory Gates (after every dispatch)
 
@@ -124,7 +138,7 @@ For each dispatched task:
 
 - Load `.github/skills/rw-loop/assets/rw-loop-task-inspector.subagent.md`.
 - Call `runSubagent` per locked task.
-- Require: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
+- Require: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`, `RUNTIME_GATE=PASS|FAIL`.
 - On fail: keep `in-progress` or set `blocked` per retry threshold, always syncing status artifacts.
 - Strike counting: only `TASK_INSPECTION=FAIL` increments strike counters.
 - On each `TASK_INSPECTION=FAIL`:
@@ -227,8 +241,10 @@ RUNSUBAGENT_DISPATCH_BEGIN <TASK-XX>
 RUNSUBAGENT_DISPATCH_OK <TASK-XX>
 VERIFICATION_EVIDENCE <LOCKED_TASK_ID>
 STATE_SYNC_CHECK=PASS|FAIL
+ENV_PREFLIGHT=PASS|FAIL
 TASK_INSPECTION=PASS|FAIL
 USER_PATH_GATE=PASS|FAIL
+RUNTIME_GATE=PASS|FAIL
 SECURITY_GATE=PASS|FAIL
 PHASE_INSPECTION=PASS|FAIL
 PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED

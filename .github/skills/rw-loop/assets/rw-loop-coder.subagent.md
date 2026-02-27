@@ -20,6 +20,7 @@ Mandatory workflow (TDD first):
    - UI route/button/menu path is reachable from existing navigation
    - CLI/API command entry is discoverable and documented (if applicable)
    - no orphan feature path (implemented but unreachable)
+9) For runtime-visible behavior tasks, run at least one runtime scenario command from Verification and capture artifact path(s) in evidence.
 
 Rules:
 1) Do not complete any other task.
@@ -35,6 +36,7 @@ Rules:
    - one failing test evidence (exit_code != 0) before implementation
    - one passing test evidence (exit_code = 0) after implementation
    - one user-path verification evidence entry
+   - for runtime-visible behavior tasks: one runtime evidence entry including artifact path(s) in `key_output`
 6) Commit with a conventional commit message.
 7) Never call `runSubagent`.
 8) Always append one line at the end of every dispatch:

@@ -44,7 +44,9 @@ One primary error token + `NEXT_COMMAND=rw-planner`:
    - `TARGET_KIND`: `PRODUCT_CODE` (default) or `AGENT_WORKFLOW`
    - `USER_PATH`: how end user reaches/uses the feature
    - `SCOPE_BOUNDARY`: explicit in-scope and out-of-scope
-   - `ACCEPTANCE_SIGNAL`: observable behavior + verification command
+   - `ACCEPTANCE_SIGNAL`: dual-gate acceptance
+     - Gate A: state/build/test/document consistency checks
+     - Gate B: runtime-visible behavior checks (normal flow + declared error flow when applicable)
 3. Defaulting rule for `TARGET_KIND`:
    - Default to `PRODUCT_CODE`.
    - Use `AGENT_WORKFLOW` only when request explicitly targets agent/prompt/orchestration assets.
@@ -160,6 +162,10 @@ Strategy selection:
      - `Task-Level Verification` (scoped and fast checks per task; target quick feedback)
      - `Phase Gate Verification Commands` (project-wide integration/regression checks run once when a phase completes)
      - `Final Gate Verification Commands` (project-wide checks + key user-path smoke before `NEXT_COMMAND=done`)
+   - Must include `## Environment Preflight Requirements` with:
+     - `Required Commands`
+     - `Required Environment Variables`
+     - `Optional Config Validations`
    - If `Phase/Final` commands cannot be one-liners, list ordered command blocks.
 2. Create 2–6 atomic tasks `TASK-XX-*.md`. Each must contain:
    - YAML frontmatter with `task_id`, `phase`, `status: pending`, `dependencies`
@@ -170,6 +176,10 @@ Strategy selection:
    - Acceptance Criteria, Accessibility Criteria
    - Files to Create/Modify
    - Test Strategy, Verification (`Verification` must be task-scoped/fast and must not duplicate full project regression commands unless strictly required by task scope)
+   - For user-visible behavior tasks, `Verification` must include runtime checks:
+     - one normal-flow runtime command
+     - one error-flow runtime command when an error path is declared
+     - expected runtime evidence artifact path(s) (log/screenshot/output file)
    - Strike History Reference (optional): path to prior `.ai/runtime/strikes/<TASK-XX>-strikes.md` when replanning a previously blocked task
 3. Update `.ai/PROGRESS.md`:
    - Append new task rows as `pending`.
