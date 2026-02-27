@@ -190,4 +190,6 @@ Strategy selection:
 - Planner must treat `Feature Hash` as approval integrity guard.
 - Planner must maximize independent task decomposition before serializing edges.
 - Write `task-graph.yaml` before emitting success output.
+- After emitting success output (`NEXT_COMMAND=rw-loop`), planner must stop immediately.
+- Planner must never continue into implementation flow, call rw-loop internally, or modify non-`.ai/**` files.
 - Update `.ai/memory/shared-memory.md` with one short planning decision entry.

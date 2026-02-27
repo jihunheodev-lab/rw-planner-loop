@@ -99,6 +99,9 @@ OPEN_QUESTIONS_COUNT=<n>
 NEXT_COMMAND=rw-loop
 ```
 
+After emitting the success output contract, stop planner execution immediately.
+Do not start implementation, do not dispatch rw-loop internally, and do not modify product code.
+
 ## Failure Handling
 
 | Token | Meaning | Next |
