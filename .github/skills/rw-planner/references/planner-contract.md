@@ -153,13 +153,18 @@ Strategy selection:
 ## Task Decomposition
 
 1. Create/update `.ai/tasks/TASK-00-READBEFORE.md`.
+   - Must include `## Verification Policy` with three sections:
+     - `Task-Level Verification` (scoped and fast checks per task; target quick feedback)
+     - `Phase Gate Verification Commands` (project-wide integration/regression checks run once when a phase completes)
+     - `Final Gate Verification Commands` (project-wide checks + key user-path smoke before `NEXT_COMMAND=done`)
+   - If `Phase/Final` commands cannot be one-liners, list ordered command blocks.
 2. Create 2–6 atomic tasks `TASK-XX-*.md`. Each must contain:
    - YAML frontmatter with `task_id`, `phase`, `status: pending`, `dependencies`
    - Phase, Title, Dependencies, Dependency Rationale
    - User Path, Description
    - Acceptance Criteria, Accessibility Criteria
    - Files to Create/Modify
-   - Test Strategy, Verification
+   - Test Strategy, Verification (`Verification` must be task-scoped/fast and must not duplicate full project regression commands unless strictly required by task scope)
    - Strike History Reference (optional): path to prior `.ai/runtime/strikes/<TASK-XX>-strikes.md` when replanning a previously blocked task
 3. Update `.ai/PROGRESS.md`:
    - Append new task rows as `pending`.

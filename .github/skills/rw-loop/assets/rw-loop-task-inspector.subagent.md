@@ -7,7 +7,7 @@ Inputs:
 - latest implementation commit
 
 Rules:
-1) Verify preflight first (build/lint/test from task verification section).
+1) Verify preflight first using task-level verification commands from the task verification section (scoped/fast checks).
 2) Validate all acceptance criteria in task file.
 3) Validate user accessibility path:
    - the implemented feature must be reachable by a user flow.

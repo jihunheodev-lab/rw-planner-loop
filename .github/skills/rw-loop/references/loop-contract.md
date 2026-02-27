@@ -68,6 +68,7 @@ When `PARALLEL_MODE=ON` and `--max-parallel` is omitted, `MAX_PARALLEL=4`.
 - Single mode: one dispatch = exactly one task completed.
 - Parallel mode: N dispatched = exactly N completed. Only independent tasks (no dependency relation).
 - Every completed task must increase verification evidence count.
+- Task-level verification is scoped/fast per task. Full project regression checks run at phase/final gates using `TASK-00-READBEFORE.md` policy.
 - Every transition for `LOCKED_TASK_ID` must update synchronized state artifacts in the same dispatch cycle.
 - State transitions:
   - `pending → in-progress` before dispatch
@@ -166,10 +167,14 @@ For each dispatched task:
 ### Phase Inspector (when current phase tasks all completed)
 
 - Load `.github/skills/rw-loop/assets/rw-loop-phase-inspector.subagent.md`.
+- Read `.ai/tasks/TASK-00-READBEFORE.md` and locate `Phase Gate Verification Commands`.
+- Run all phase-gate verification commands before approval decision.
+  - If section is missing/empty (legacy plan), infer best available full regression set (project-wide build + full test + key user-path smoke) and run those.
 - Call `runSubagent`.
 - Require: `PHASE_INSPECTION=PASS|FAIL`, `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
 - Require phase-wide status consistency across `PROGRESS`, task frontmatter, and `task-graph.yaml` before phase approval.
 - Require completed tasks in this phase to have `strike.active=0` and `security.active=0`.
+- If any phase-gate verification command fails: force `PHASE_REVIEW_STATUS=NEEDS_REVISION` and stop with `NEXT_COMMAND=rw-loop`.
 - On `NEEDS_REVISION`: stop with `NEXT_COMMAND=rw-loop`.
 - On `FAILED`: stop with `NEXT_COMMAND=rw-planner`.
 - **[HITL MANDATORY]** If `HITL_MODE=ON`: BEFORE calling `askQuestions`, output a structured phase summary so the user can make an informed decision:
@@ -199,8 +204,12 @@ For each dispatched task:
 ### Review Gate (when all tasks completed)
 
 - Load `.github/skills/rw-loop/assets/rw-loop-review.subagent.md`.
+- Read `.ai/tasks/TASK-00-READBEFORE.md` and locate `Final Gate Verification Commands`.
+- Run all final-gate verification commands before allowing `REVIEW_STATUS=OK`.
+  - If section is missing/empty (legacy plan), infer best available full regression set (project-wide build + full test + key user-path smoke) and run those.
 - Call `runSubagent`.
 - Require: `REVIEW_STATUS=OK|FAIL|ESCALATE`.
+- If any final-gate verification command fails: force `REVIEW_STATUS=FAIL`.
 - On `OK`: proceed to success output.
 - On `FAIL`/`ESCALATE`: stop with appropriate `NEXT_COMMAND`.
 

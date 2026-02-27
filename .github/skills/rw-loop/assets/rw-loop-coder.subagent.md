@@ -15,7 +15,7 @@ Mandatory workflow (TDD first):
 4) Run tests and confirm at least one targeted failure before implementation.
 5) Implement the minimum code to satisfy failing tests.
 6) Re-run the same tests and confirm they pass.
-7) Run verification commands from the task file.
+7) Run task-level verification commands from the task file (scoped/fast checks for this task only).
 8) Verify user entry wiring explicitly:
    - UI route/button/menu path is reachable from existing navigation
    - CLI/API command entry is discoverable and documented (if applicable)

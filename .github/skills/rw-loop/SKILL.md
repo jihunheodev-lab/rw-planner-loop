@@ -74,12 +74,13 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
    - Single mode: 1 task. Parallel mode: up to `MAX_PARALLEL` independent tasks (default `4`).
 3. **Dispatch** to coder subagent via `runSubagent`.
 4. **Validate**: completion delta (exactly N tasks), correct task IDs, evidence count increased, and state sync across `PROGRESS` + task frontmatter + `task-graph`.
+   - Task-level verification should stay scoped/fast. Full regression belongs to Phase/Review gates via `TASK-00` policy.
 5. **Task Inspector Gate**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
 6. **Security Gate**: `SECURITY_GATE=PASS|FAIL`.
-7. **Phase Inspector** (when phase complete): `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
+7. **Phase Inspector** (when phase complete): run `TASK-00` phase-gate full verification commands, then require `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
    - **[HITL MANDATORY]** If `HITL_MODE=ON`: output structured phase summary (completed tasks + evidence + inspector findings + 직접 확인 방법) THEN call `askQuestions` — unconditionally, never skip.
 8. **3-strike rule**: same task `strike.active` reaches 3 → blocked + escalate to planner. `strike.total`/`security.total` stay cumulative for history IDs, and `active` counters reset on successful completion.
-9. **Review Gate** (all tasks complete): `REVIEW_STATUS=OK|FAIL|ESCALATE`.
+9. **Review Gate** (all tasks complete): run `TASK-00` final-gate full verification commands, then require `REVIEW_STATUS=OK|FAIL|ESCALATE`.
 
 ## State Transitions
 

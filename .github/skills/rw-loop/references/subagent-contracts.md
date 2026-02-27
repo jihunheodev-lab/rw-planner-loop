@@ -16,7 +16,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 3. Run tests → confirm at least one targeted failure.
 4. Implement minimum code to pass tests.
 5. Re-run tests → confirm pass.
-6. Run verification commands from task file.
+6. Run task-level verification commands from task file (scoped/fast checks for this task only).
 7. Verify user entry wiring: feature reachable from existing navigation (UI/CLI/API).
 8. Transition `LOCKED_TASK_ID` status from `in-progress` to `completed` in all synchronized state artifacts in the same dispatch cycle:
    - `.ai/PROGRESS.md` task row `Status`
@@ -44,7 +44,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 **Inputs**: `LOCKED_TASK_ID`, task file, progress file, latest commit
 
 **Workflow**:
-1. Verify preflight (build/lint/test from task verification section).
+1. Verify preflight using task-level verification commands from task verification section (scoped/fast checks).
 2. Validate all acceptance + accessibility criteria.
 3. Validate user accessibility path (feature reachable by user flow).
 
@@ -76,7 +76,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 **Purpose**: Verify phase-level integration when all phase tasks complete.
 
-**Inputs**: `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`, `.ai/runtime/rw-active-plan-id.txt`, `.ai/plans/<PLAN_ID>/task-graph.yaml`, `.ai/runtime/rw-strike-state.yaml` (if exists), recent commits for current phase
+**Inputs**: `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`, `.ai/tasks/TASK-00-READBEFORE.md`, `.ai/runtime/rw-active-plan-id.txt`, `.ai/plans/<PLAN_ID>/task-graph.yaml`, `.ai/runtime/rw-strike-state.yaml` (if exists), recent commits for current phase
 
 **Checks**:
 1. Status consistency for every phase task across:
@@ -87,6 +87,9 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 3. No unresolved `REVIEW-ESCALATE` lines.
 4. No task marked `blocked` in current phase.
 5. Completed tasks must have `strike.active=0` and `security.active=0` in `.ai/runtime/rw-strike-state.yaml` (if file exists).
+6. Run every command listed under `Phase Gate Verification Commands` in `TASK-00-READBEFORE.md`.
+   - If section is missing/empty (legacy plan), infer best available full regression set (project-wide build + full test + key user-path smoke) and run those.
+   - Any non-zero exit must fail phase approval.
 
 **Output**:
 - Pass: `PHASE_INSPECTION=PASS`, `PHASE_REVIEW_STATUS=APPROVED`
@@ -99,10 +102,16 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 **Purpose**: Final completion/escalation decision when all tasks are done.
 
+**Inputs**: `.ai/tasks/TASK-00-READBEFORE.md`, all task-inspection results for current run
+
 **Output**:
 - `REVIEW_STATUS=OK` → success
 - `REVIEW_STATUS=FAIL` → fixable issue
 - `REVIEW_STATUS=ESCALATE` → critical blocker (3+ failures same task), append `REVIEW-ESCALATE`
+
+**Rule**: Before emitting `REVIEW_STATUS=OK`, run every command listed under `Final Gate Verification Commands` in `TASK-00-READBEFORE.md`.
+- If section is missing/empty (legacy plan), infer best available full regression set (project-wide build + full test + key user-path smoke) and run those.
+- Any non-zero exit must emit `REVIEW_STATUS=FAIL`.
 
 ---
 

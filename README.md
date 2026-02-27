@@ -34,6 +34,12 @@ AI가 자동으로 12개 스킬 파일을 다운로드하여 프로젝트의 `.g
 | `--parallel` | 병렬 모드 ON(기본값이므로 보통 생략 가능) |
 | `--max-parallel=N` | 최대 N개 병렬 (기본 4) |
 
+### 검증 전략 (기본)
+
+- Task 단계: 변경 범위 중심의 빠른 검증
+- Phase/Final 게이트: 프로젝트 전체 회귀 검증 1회
+- 전체 검증 명령은 `.ai/tasks/TASK-00-READBEFORE.md`의 Verification Policy를 기준으로 실행
+
 ## 동작 흐름
 
 ```
