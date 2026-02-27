@@ -144,7 +144,7 @@ Strategy selection:
 5. Write artifacts:
    - `.ai/plans/<PLAN_ID>/research_findings_<focus>.yaml` (focus_area, summary, citations, assumptions)
    - `.ai/plans/<PLAN_ID>/plan-summary.yaml`
-   - `.ai/plans/<PLAN_ID>/task-graph.yaml` (plan_id, nodes, edges, parallel_groups)
+   - `.ai/plans/<PLAN_ID>/task-graph.yaml` (plan_id, nodes, edges, parallel_groups). Each node must include `task_id`, `status: pending`, and declared dependencies.
    - `.ai/runtime/rw-active-plan-id.txt`
    - `.ai/PLAN.md`
 6. Verify artifact completeness: `plan-summary.yaml`, `task-graph.yaml`, at least one `research_findings_*.yaml` must exist and be non-empty.
@@ -154,6 +154,7 @@ Strategy selection:
 
 1. Create/update `.ai/tasks/TASK-00-READBEFORE.md`.
 2. Create 2–6 atomic tasks `TASK-XX-*.md`. Each must contain:
+   - YAML frontmatter with `task_id`, `phase`, `status: pending`, `dependencies`
    - Phase, Title, Dependencies, Dependency Rationale
    - User Path, Description
    - Acceptance Criteria, Accessibility Criteria

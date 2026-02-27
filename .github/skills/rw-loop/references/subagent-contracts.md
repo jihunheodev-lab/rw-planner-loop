@@ -8,7 +8,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 **Purpose**: Implement exactly one locked task using TDD discipline.
 
-**Inputs**: `LOCKED_TASK_ID`, `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`
+**Inputs**: `LOCKED_TASK_ID`, `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`, `.ai/runtime/rw-active-plan-id.txt`, `.ai/plans/<PLAN_ID>/task-graph.yaml`
 
 **Mandatory Workflow**:
 1. Read task fully (User Path, Acceptance Criteria, Accessibility Criteria, Verification).
@@ -18,7 +18,11 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 5. Re-run tests → confirm pass.
 6. Run verification commands from task file.
 7. Verify user entry wiring: feature reachable from existing navigation (UI/CLI/API).
-8. Append evidence log:
+8. Transition `LOCKED_TASK_ID` status from `in-progress` to `completed` in all synchronized state artifacts in the same dispatch cycle:
+   - `.ai/PROGRESS.md` task row `Status`
+   - task file frontmatter `status`
+   - `task-graph.yaml` node `status`
+9. Append evidence log:
    ```
    VERIFICATION_EVIDENCE <LOCKED_TASK_ID> <UNIT|INTEGRATION|ACCEPTANCE>: command="<cmd>" exit_code=<code> key_output="<summary>"
    ```
@@ -28,7 +32,7 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 - One passing test evidence (exit_code = 0) after implementation
 - One user-path verification evidence entry
 
-**Rules**: Complete only the locked task. Update exactly one task row. Commit with conventional message. Never call `runSubagent`. Always append one line:
+**Rules**: Complete only the locked task. Update status for exactly one locked task across synchronized state artifacts. Do not mutate `.ai/runtime/rw-strike-state.yaml`. Commit with conventional message. Never call `runSubagent`. Always append one line:
 `APPROACH_SUMMARY <LOCKED_TASK_ID>: "<single-line summary>"` (max 200 chars, no newlines, escape inner `"` as `\"`).
 
 ---
@@ -72,10 +76,17 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 **Purpose**: Verify phase-level integration when all phase tasks complete.
 
+**Inputs**: `.ai/PROGRESS.md`, `.ai/tasks/TASK-*.md`, `.ai/runtime/rw-active-plan-id.txt`, `.ai/plans/<PLAN_ID>/task-graph.yaml`, `.ai/runtime/rw-strike-state.yaml` (if exists), recent commits for current phase
+
 **Checks**:
-1. Phase-level coverage and integration between tasks.
-2. No unresolved `REVIEW-ESCALATE` lines.
-3. No task marked `blocked` in current phase.
+1. Status consistency for every phase task across:
+   - `.ai/PROGRESS.md` row `Status`
+   - task frontmatter `status`
+   - `task-graph.yaml` node `status`
+2. Phase-level coverage and integration between tasks.
+3. No unresolved `REVIEW-ESCALATE` lines.
+4. No task marked `blocked` in current phase.
+5. Completed tasks must have `strike.active=0` and `security.active=0` in `.ai/runtime/rw-strike-state.yaml` (if file exists).
 
 **Output**:
 - Pass: `PHASE_INSPECTION=PASS`, `PHASE_REVIEW_STATUS=APPROVED`
@@ -97,7 +108,11 @@ Five mandatory subagents used by the loop phase. Each is dispatched via `runSuba
 
 ## Common Rules for All Subagents
 
+- Loop orchestrator must run `python .github/skills/rw-loop/scripts/check_state_sync.py` before dispatch (preflight).
 - Never call `runSubagent` from within a subagent.
 - Keep findings factual and actionable.
 - Use exact token format for machine-readable output.
 - `APPROACH_SUMMARY` is orchestrator-consumed only and is not a contract token.
+- Strike state ownership stays in loop orchestrator:
+  - `rw-strike-state.yaml` uses `total` (lifetime) and `active` (current unresolved) counters.
+  - Subagents must not directly increment/decrement strike counters.

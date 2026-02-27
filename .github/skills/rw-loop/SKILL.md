@@ -19,6 +19,7 @@ The following must exist before running this skill (created by `rw-planner`):
 - `.ai/CONTEXT.md` — language policy
 - `.ai/PROGRESS.md` — task status table
 - `.ai/tasks/` — atomic task files (`TASK-XX-*.md`)
+- `.ai/runtime/rw-active-plan-id.txt` + `.ai/plans/<PLAN_ID>/task-graph.yaml` — DAG + node status source
 - `.github/skills/rw-loop/assets/` — 5 subagent prompt files
 
 If any prerequisite is missing, the skill prints a failure token and stops.
@@ -45,7 +46,7 @@ End:    Review    → final review gate → success output
    - [rw-loop-review.subagent.md](./assets/rw-loop-review.subagent.md)
    - If any file is missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
 6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
-7. If `.ai/runtime/rw-active-plan-id.txt` exists, read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph.
+7. Read `.ai/runtime/rw-active-plan-id.txt`, then read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph. If missing/unreadable: print `TARGET_ROOT_INVALID`, stop.
 
 ## Mode Resolution
 
@@ -64,15 +65,18 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
 ### Quick Reference
 
 1. Check `.ai/PAUSE.md`. If exists: print `PAUSE_DETECTED`, stop.
+1a. Run state sync checker before dispatch:
+   - `python .github/skills/rw-loop/scripts/check_state_sync.py`
+   - If checker returns fail tokens, stop and fix state artifacts first.
 2. **Select dispatchable task(s)** from DAG (`in-progress` first, then `pending`, never `blocked`).
    - Single mode: 1 task. Parallel mode: up to `MAX_PARALLEL` independent tasks.
 3. **Dispatch** to coder subagent via `runSubagent`.
-4. **Validate**: completion delta (exactly N tasks), correct task IDs, evidence count increased.
+4. **Validate**: completion delta (exactly N tasks), correct task IDs, evidence count increased, and state sync across `PROGRESS` + task frontmatter + `task-graph`.
 5. **Task Inspector Gate**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
 6. **Security Gate**: `SECURITY_GATE=PASS|FAIL`.
 7. **Phase Inspector** (when phase complete): `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
    - **[HITL MANDATORY]** If `HITL_MODE=ON`: output structured phase summary (completed tasks + evidence + inspector findings + 직접 확인 방법) THEN call `askQuestions` — unconditionally, never skip.
-8. **3-strike rule**: same task fails 3× → blocked + escalate to planner. Strike history is written to `.ai/runtime/strikes/<TASK-XX>-strikes.md`.
+8. **3-strike rule**: same task `strike.active` reaches 3 → blocked + escalate to planner. `strike.total`/`security.total` stay cumulative for history IDs, and `active` counters reset on successful completion.
 9. **Review Gate** (all tasks complete): `REVIEW_STATUS=OK|FAIL|ESCALATE`.
 
 ## State Transitions
@@ -109,7 +113,8 @@ NEXT_COMMAND=<done|rw-planner|rw-loop>
 |-------|---------|------|
 | `RW_ENV_UNSUPPORTED` | `runSubagent` unavailable | stop |
 | `RW_SUBAGENT_PROMPT_MISSING` | subagent prompt file missing | run rw-planner |
-| `TARGET_ROOT_INVALID` | `.ai/PROGRESS.md` or tasks missing | run rw-planner |
+| `TARGET_ROOT_INVALID` | required state files missing (`PROGRESS`, tasks, active-plan graph) | run rw-planner |
+| `RW_SUBAGENT_STATE_SYNC_INVALID` | status mismatch across state artifacts | fix sync + re-run |
 | `LANG_POLICY_MISSING` | `.ai/CONTEXT.md` missing | run rw-planner |
 | `TASK_DEPENDENCY_BLOCKED` | no dispatchable task | replan |
 | `SECURITY_GATE_FAILED` | security regression found | fix + re-run |

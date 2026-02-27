@@ -75,8 +75,8 @@ Load full planner contract: [planner-contract.md](./references/planner-contract.
    - Phase E: Subagent planning — generate plan candidates via `runSubagent`, confirm selection.
 3. **Feature File**: Create/update under `.ai/features/` with approval metadata + SHA-256 hash integrity.
 4. **Approval Gate**: Feature must have `Approval: APPROVED`. Hash mismatch resets approval.
-5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/`.
-6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with acceptance criteria, user path, verification commands.
+5. **Plan Artifacts**: `plan-summary.yaml`, `task-graph.yaml`, `research_findings_*.yaml` under `.ai/plans/<PLAN_ID>/` (`task-graph` nodes must start with `status: pending`).
+6. **Task Decomposition**: Create 2–6 atomic `TASK-XX-*.md` in `.ai/tasks/` with frontmatter `status: pending`, acceptance criteria, user path, verification commands.
 7. **Update Progress**: Append task rows to `.ai/PROGRESS.md` as `pending`.
 
 ### Planner Output Contract (success)
