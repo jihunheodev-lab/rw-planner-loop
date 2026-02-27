@@ -71,7 +71,7 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
 5. **Task Inspector Gate**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
 6. **Security Gate**: `SECURITY_GATE=PASS|FAIL`.
 7. **Phase Inspector** (when phase complete): `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
-   - If `HITL_MODE=ON`: ask phase approval confirmation.
+   - **[HITL MANDATORY]** If `HITL_MODE=ON`: MUST call `askQuestions` for phase approval — unconditionally, never skip.
 8. **3-strike rule**: same task fails 3× → blocked + escalate to planner. Strike history is written to `.ai/runtime/strikes/<TASK-XX>-strikes.md`.
 9. **Review Gate** (all tasks complete): `REVIEW_STATUS=OK|FAIL|ESCALATE`.
 

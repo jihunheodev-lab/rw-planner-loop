@@ -44,6 +44,12 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
 ## Main Loop
 
 1. Check `.ai/PAUSE.md`. If exists: print `PAUSE_DETECTED`, stop.
+1a. **[HITL MANDATORY]** If `HITL_MODE=ON`: print `HITL_MODE=ON` and call `askQuestions` with a single confirmation:
+   - Header: "HITL 확인"
+   - Question: "HITL 모드가 활성화되어 있습니다. 각 Phase 완료 시 진행 여부를 묻습니다. 계속 진행할까요?"
+   - Options: "예, 진행합니다" (recommended), "아니요, 중단합니다"
+   - If user declines: stop immediately.
+   - **This step MUST NOT be skipped. Do not proceed to step 2 until the user answers.**
 2. Resolve locked task set from PROGRESS:
    - `PARALLEL_MODE=OFF`: one `LOCKED_TASK_ID`
    - `PARALLEL_MODE=ON`: up to `MAX_PARALLEL` independent tasks via `task-graph.yaml`
@@ -112,9 +118,12 @@ For each dispatched task:
 - Require: `PHASE_INSPECTION=PASS|FAIL`, `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
 - On `NEEDS_REVISION`: stop with `NEXT_COMMAND=rw-loop`.
 - On `FAILED`: stop with `NEXT_COMMAND=rw-planner`.
-- If `HITL_MODE=ON`: ask one explicit yes/no via `askQuestions`:
-  - "현재 phase를 완료로 승인하고 다음 phase로 진행할까요?"
+- **[HITL MANDATORY]** If `HITL_MODE=ON`: call `askQuestions` — this is UNCONDITIONAL and CANNOT be skipped regardless of `PHASE_REVIEW_STATUS`:
+  - Header: "Phase 승인"
+  - Question: "현재 phase를 완료로 승인하고 다음 phase로 진행할까요?"
+  - Options: "예, 다음 phase로 진행합니다" (recommended), "아니요, 현재 phase를 재검토합니다"
   - If user declines: stop with `NEXT_COMMAND=rw-loop`.
+  - **Do NOT call this inside a conditional branch. It MUST always execute when HITL_MODE=ON. Never infer approval without asking.**
 
 ### Review Gate (when all tasks completed)
 
@@ -143,7 +152,17 @@ SECURITY_GATE=PASS|FAIL
 PHASE_INSPECTION=PASS|FAIL
 PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED
 REVIEW_STATUS=OK|FAIL|ESCALATE
+HITL_PHASE_APPROVED=YES|NO
 ```
+
+## HITL Enforcement Rules
+
+- `HITL_MODE=ON` → `askQuestions` is **MANDATORY** at:
+  1. Loop start (step 1a) — one-time confirmation
+  2. Phase Inspector completion — every phase, every time
+- These calls are **unconditional and non-negotiable**.
+- Skipping either call when `HITL_MODE=ON` is a **contract violation**.
+- The model MUST NOT auto-advance to the next phase or loop without explicit user confirmation when `HITL_MODE=ON`.
 
 ## Success Output
 
