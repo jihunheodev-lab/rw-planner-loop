@@ -145,8 +145,9 @@ Strategy selection:
    - `.ai/plans/<PLAN_ID>/research_findings_<focus>.yaml` (focus_area, summary, citations, assumptions)
    - `.ai/plans/<PLAN_ID>/plan-summary.yaml`
    - `.ai/plans/<PLAN_ID>/task-graph.yaml` (plan_id, nodes, edges, parallel_groups). Each node must include `task_id`, `status: pending`, and declared dependencies.
-   - Prefer wider DAG where feasible: keep same-phase tasks independent unless an ordering/data dependency is real and user-path relevant.
-   - Populate `parallel_groups` for independent siblings when available.
+   - Same-phase tasks must be independent by default to maximize DAG width.
+   - Add dependency edges only when ordering/data dependency is required for correctness or user-path validity.
+   - When independent siblings exist, `parallel_groups` must include them.
    - `.ai/runtime/rw-active-plan-id.txt`
    - `.ai/PLAN.md`
 6. Verify artifact completeness: `plan-summary.yaml`, `task-graph.yaml`, at least one `research_findings_*.yaml` must exist and be non-empty.
@@ -163,8 +164,8 @@ Strategy selection:
 2. Create 2–6 atomic tasks `TASK-XX-*.md`. Each must contain:
    - YAML frontmatter with `task_id`, `phase`, `status: pending`, `dependencies`
    - Phase, Title, Dependencies, Dependency Rationale
-   - Prefer independent tasks within a phase; add dependency edges only when needed for correctness/integration order.
-   - Keep `Dependency Rationale` concise and concrete (recommended when dependencies are present).
+   - Keep tasks independent within a phase unless dependency is strictly required.
+   - If `dependencies` is non-empty, `Dependency Rationale` is required and must be concrete.
    - User Path, Description
    - Acceptance Criteria, Accessibility Criteria
    - Files to Create/Modify
@@ -187,6 +188,6 @@ Strategy selection:
 - Planner must not create tasks before Phase C + Phase E confirmations.
 - Planner must not create tasks before `Approval: APPROVED`.
 - Planner must treat `Feature Hash` as approval integrity guard.
-- Planner should maximize independent task decomposition before serializing edges.
+- Planner must maximize independent task decomposition before serializing edges.
 - Write `task-graph.yaml` before emitting success output.
 - Update `.ai/memory/shared-memory.md` with one short planning decision entry.
