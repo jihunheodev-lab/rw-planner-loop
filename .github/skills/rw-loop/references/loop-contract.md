@@ -118,12 +118,29 @@ For each dispatched task:
 - Require: `PHASE_INSPECTION=PASS|FAIL`, `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
 - On `NEEDS_REVISION`: stop with `NEXT_COMMAND=rw-loop`.
 - On `FAILED`: stop with `NEXT_COMMAND=rw-planner`.
-- **[HITL MANDATORY]** If `HITL_MODE=ON`: call `askQuestions` — this is UNCONDITIONAL and CANNOT be skipped regardless of `PHASE_REVIEW_STATUS`:
+- **[HITL MANDATORY]** If `HITL_MODE=ON`: BEFORE calling `askQuestions`, output a structured phase summary so the user can make an informed decision:
+
+  ```
+  === Phase <N> 완료 요약 ===
+  완료된 Tasks:
+    - TASK-XX: <task title>
+      증거: <핵심 verification evidence 1줄 요약 (예: tests passed 5/5, file created at path/to/file)>
+    - TASK-YY: ...
+
+  Phase Inspector 판정: <APPROVED|NEEDS_REVISION|FAILED>
+  판정 근거: <Phase Inspector findings 요약 2-3줄>
+
+  직접 확인 방법:
+    <사용자가 실행할 수 있는 명령어 또는 확인할 파일 경로. 없으면 "해당 없음">
+  ========================
+  ```
+
+  Then call `askQuestions` — this is UNCONDITIONAL and CANNOT be skipped:
   - Header: "Phase 승인"
-  - Question: "현재 phase를 완료로 승인하고 다음 phase로 진행할까요?"
+  - Question: "위 요약을 확인하셨나요? 현재 phase를 완료로 승인하고 다음 phase로 진행할까요?"
   - Options: "예, 다음 phase로 진행합니다" (recommended), "아니요, 현재 phase를 재검토합니다"
   - If user declines: stop with `NEXT_COMMAND=rw-loop`.
-  - **Do NOT call this inside a conditional branch. It MUST always execute when HITL_MODE=ON. Never infer approval without asking.**
+  - **Do NOT call this inside a conditional branch. The summary + askQuestions MUST always execute when HITL_MODE=ON. Never infer approval without asking.**
 
 ### Review Gate (when all tasks completed)
 
