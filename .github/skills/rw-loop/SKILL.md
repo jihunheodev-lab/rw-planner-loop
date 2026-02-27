@@ -52,11 +52,13 @@ End:    Review    → final review gate → success output
 
 | Flag | HITL_MODE | PARALLEL_MODE |
 |------|-----------|---------------|
-| (default) | ON | OFF |
-| `--auto` or `--no-hitl` | OFF | OFF |
-| `--hitl` | ON | OFF |
+| (default) | ON | ON |
+| `--auto` or `--no-hitl` | OFF | ON |
+| `--hitl` | ON | ON |
 | `--parallel` | (unchanged) | ON |
 | `--max-parallel=<n>` | (unchanged) | ON, clamped 1..4 |
+
+When `PARALLEL_MODE=ON` and `--max-parallel` is omitted, `MAX_PARALLEL=4`.
 
 ## Main Loop
 
@@ -69,7 +71,7 @@ Load full loop contract: [loop-contract.md](./references/loop-contract.md)
    - `python .github/skills/rw-loop/scripts/check_state_sync.py`
    - If checker returns fail tokens, stop and fix state artifacts first.
 2. **Select dispatchable task(s)** from DAG (`in-progress` first, then `pending`, never `blocked`).
-   - Single mode: 1 task. Parallel mode: up to `MAX_PARALLEL` independent tasks.
+   - Single mode: 1 task. Parallel mode: up to `MAX_PARALLEL` independent tasks (default `4`).
 3. **Dispatch** to coder subagent via `runSubagent`.
 4. **Validate**: completion delta (exactly N tasks), correct task IDs, evidence count increased, and state sync across `PROGRESS` + task frontmatter + `task-graph`.
 5. **Task Inspector Gate**: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.

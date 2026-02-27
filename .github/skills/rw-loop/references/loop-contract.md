@@ -38,11 +38,13 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
 
 | Flag | HITL_MODE | PARALLEL_MODE |
 |------|-----------|---------------|
-| (default) | ON | OFF |
-| `--auto` or `--no-hitl` | OFF | OFF |
-| `--hitl` | ON | OFF |
+| (default) | ON | ON |
+| `--auto` or `--no-hitl` | OFF | ON |
+| `--hitl` | ON | ON |
 | `--parallel` | (unchanged) | ON |
 | `--max-parallel=<n>` | (unchanged) | ON, clamped 1..4 |
+
+When `PARALLEL_MODE=ON` and `--max-parallel` is omitted, `MAX_PARALLEL=4`.
 
 ## State Sync Contract
 
@@ -88,7 +90,7 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
    - On fail: print checker output and stop current loop cycle.
 2. Resolve locked task set from `task-graph.yaml` (primary), cross-checking `PROGRESS` + task frontmatter:
    - `PARALLEL_MODE=OFF`: one `LOCKED_TASK_ID`
-   - `PARALLEL_MODE=ON`: up to `MAX_PARALLEL` independent tasks via `task-graph.yaml`
+   - `PARALLEL_MODE=ON`: up to `MAX_PARALLEL` independent tasks via `task-graph.yaml` (default `4`)
    - If task status mismatches between artifacts: print `RW_SUBAGENT_STATE_SYNC_INVALID`, stop.
    - If selected task is `pending`, set it to `in-progress` in all synchronized state artifacts before dispatch.
 3. If unresolved `REVIEW-ESCALATE` exists: run review first, do not dispatch.
