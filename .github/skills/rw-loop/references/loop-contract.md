@@ -9,11 +9,11 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
 3. Ensure `runSubagent` is available. If unavailable: print `RW_ENV_UNSUPPORTED`, stop.
 4. This mode never writes product code directly.
 5. Ensure required subagent prompt files exist:
-   - `.github/prompts/subagents/rw-loop-coder.subagent.md`
-   - `.github/prompts/subagents/rw-loop-task-inspector.subagent.md`
-   - `.github/prompts/subagents/rw-loop-security-review.subagent.md`
-   - `.github/prompts/subagents/rw-loop-phase-inspector.subagent.md`
-   - `.github/prompts/subagents/rw-loop-review.subagent.md`
+   - `.github/skills/rw-loop/assets/rw-loop-coder.subagent.md`
+   - `.github/skills/rw-loop/assets/rw-loop-task-inspector.subagent.md`
+   - `.github/skills/rw-loop/assets/rw-loop-security-review.subagent.md`
+   - `.github/skills/rw-loop/assets/rw-loop-phase-inspector.subagent.md`
+   - `.github/skills/rw-loop/assets/rw-loop-review.subagent.md`
    - If missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
 6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
 7. If `.ai/runtime/rw-active-plan-id.txt` exists, read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph.
@@ -54,7 +54,7 @@ Full deterministic contract for the implementation loop phase of rw-planner-loop
 ## Coder Dispatch
 
 - Print `RUNSUBAGENT_DISPATCH_BEGIN <TASK-XX>` per task.
-- Load `.github/prompts/subagents/rw-loop-coder.subagent.md`.
+- Load `.github/skills/rw-loop/assets/rw-loop-coder.subagent.md`.
 - Call `runSubagent` with coder prompt injecting `LOCKED_TASK_ID`.
 - In parallel mode: separate lock and invariant checks per task.
 
@@ -73,7 +73,7 @@ For each dispatched task:
 
 ### Task Inspector Gate
 
-- Load `.github/prompts/subagents/rw-loop-task-inspector.subagent.md`.
+- Load `.github/skills/rw-loop/assets/rw-loop-task-inspector.subagent.md`.
 - Call `runSubagent` per locked task.
 - Require: `TASK_INSPECTION=PASS|FAIL`, `USER_PATH_GATE=PASS|FAIL`.
 - On fail: keep `in-progress` or set `blocked` per retry threshold.
@@ -92,7 +92,7 @@ For each dispatched task:
 
 ### Security Gate
 
-- Load `.github/prompts/subagents/rw-loop-security-review.subagent.md`.
+- Load `.github/skills/rw-loop/assets/rw-loop-security-review.subagent.md`.
 - Call `runSubagent` with locked task IDs.
 - Require: `SECURITY_GATE=PASS|FAIL`.
 - On `SECURITY_GATE=FAIL`:
@@ -107,7 +107,7 @@ For each dispatched task:
 
 ### Phase Inspector (when current phase tasks all completed)
 
-- Load `.github/prompts/subagents/rw-loop-phase-inspector.subagent.md`.
+- Load `.github/skills/rw-loop/assets/rw-loop-phase-inspector.subagent.md`.
 - Call `runSubagent`.
 - Require: `PHASE_INSPECTION=PASS|FAIL`, `PHASE_REVIEW_STATUS=APPROVED|NEEDS_REVISION|FAILED`.
 - On `NEEDS_REVISION`: stop with `NEXT_COMMAND=rw-loop`.
@@ -118,7 +118,7 @@ For each dispatched task:
 
 ### Review Gate (when all tasks completed)
 
-- Load `.github/prompts/subagents/rw-loop-review.subagent.md`.
+- Load `.github/skills/rw-loop/assets/rw-loop-review.subagent.md`.
 - Call `runSubagent`.
 - Require: `REVIEW_STATUS=OK|FAIL|ESCALATE`.
 - On `OK`: proceed to success output.

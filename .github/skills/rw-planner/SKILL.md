@@ -16,7 +16,7 @@ Bootstrap workspace + hybrid interview → feature normalization → task decomp
 ## Procedure Overview
 
 ```
-Phase 1: Bootstrap   → scaffold .ai/ dirs, subagent prompts, templates (first run only)
+Phase 1: Bootstrap   → scaffold .ai/ dirs and templates (first run only)
 Phase 2: Plan        → interview → feature → plan artifacts → atomic tasks
 Output:  NEXT_COMMAND=rw-loop
 ```

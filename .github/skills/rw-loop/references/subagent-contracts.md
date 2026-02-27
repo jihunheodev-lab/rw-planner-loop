@@ -1,6 +1,6 @@
 # Subagent Contracts
 
-Five mandatory subagents used by the loop phase. Each is dispatched via `runSubagent` with the corresponding prompt file from `.github/prompts/subagents/`.
+Five mandatory subagents used by the loop phase. Each is dispatched via `runSubagent` with the corresponding prompt file from `.github/skills/rw-loop/assets/`.
 
 ---
 

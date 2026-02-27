@@ -19,7 +19,7 @@ The following must exist before running this skill (created by `rw-planner`):
 - `.ai/CONTEXT.md` — language policy
 - `.ai/PROGRESS.md` — task status table
 - `.ai/tasks/` — atomic task files (`TASK-XX-*.md`)
-- `.github/prompts/subagents/` — 5 subagent prompt files
+- `.github/skills/rw-loop/assets/` — 5 subagent prompt files
 
 If any prerequisite is missing, the skill prints a failure token and stops.
 
@@ -37,14 +37,13 @@ End:    Review    → final review gate → success output
 2. Verify `.ai/PROGRESS.md` and `.ai/tasks/` exist. If missing: print `TARGET_ROOT_INVALID`, stop.
 3. Verify `runSubagent` is available. If not: print `RW_ENV_UNSUPPORTED`, stop.
 4. This mode never writes product code directly.
-5. Ensure `.github/prompts/subagents/` directory exists. Create if missing.
-6. Verify required subagent prompt files exist. If any are missing, copy from skill assets:
+5. Verify required subagent prompt files exist in skill assets:
    - [rw-loop-coder.subagent.md](./assets/rw-loop-coder.subagent.md)
    - [rw-loop-task-inspector.subagent.md](./assets/rw-loop-task-inspector.subagent.md)
    - [rw-loop-security-review.subagent.md](./assets/rw-loop-security-review.subagent.md)
    - [rw-loop-phase-inspector.subagent.md](./assets/rw-loop-phase-inspector.subagent.md)
    - [rw-loop-review.subagent.md](./assets/rw-loop-review.subagent.md)
-   - If copy fails: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
+   - If any file is missing: print `RW_SUBAGENT_PROMPT_MISSING`, stop.
 6. If `.ai/memory/shared-memory.md` exists, read it before loop start.
 7. If `.ai/runtime/rw-active-plan-id.txt` exists, read matching `.ai/plans/<PLAN_ID>/task-graph.yaml` as primary dependency graph.
 
