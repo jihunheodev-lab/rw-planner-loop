@@ -15,6 +15,7 @@ Create the following directories relative to the project root:
 .github/skills/rw-planner/references/
 .github/skills/rw-loop/assets/
 .github/skills/rw-loop/references/
+.github/skills/rw-loop/scripts/
 ```
 
 ### Step 2: Download Files
@@ -43,17 +44,19 @@ Base URL: `https://raw.githubusercontent.com/jihunheodev-lab/rw-planner-loop/mai
 | `/.github/skills/rw-loop/assets/rw-loop-task-inspector.subagent.md` | `.github/skills/rw-loop/assets/rw-loop-task-inspector.subagent.md` |
 | `/.github/skills/rw-loop/references/loop-contract.md` | `.github/skills/rw-loop/references/loop-contract.md` |
 | `/.github/skills/rw-loop/references/subagent-contracts.md` | `.github/skills/rw-loop/references/subagent-contracts.md` |
+| `/.github/skills/rw-loop/scripts/check_state_sync.py` | `.github/skills/rw-loop/scripts/check_state_sync.py` |
+| `/.github/skills/rw-loop/scripts/env_preflight.py` | `.github/skills/rw-loop/scripts/env_preflight.py` |
 
 ### Step 3: Verify
 
-Confirm that 12 files were downloaded:
+Confirm that 14 files were downloaded:
 - `rw-planner/`: SKILL.md + 2 assets + 1 reference = 4 files
-- `rw-loop/`: SKILL.md + 5 assets + 2 references = 8 files
+- `rw-loop/`: SKILL.md + 5 assets + 2 references + 2 scripts = 10 files
 
 ### Step 4: Report
 
 Report the installation result to the user:
-- On success: "rw-planner-loop skills installed (12 files). Start with `@rw-planner`."
+- On success: "rw-planner-loop skills installed (14 files). Start with `@rw-planner`."
 - On failure: report which files failed and why.
 
 ## Manual Installation
