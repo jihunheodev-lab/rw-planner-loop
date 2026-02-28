@@ -103,7 +103,8 @@ rw-planner-loop/
 │  └─ rw-loop/
 │     ├─ SKILL.md                    # loop 정의
 │     ├─ assets/                     # 5개 서브에이전트 프롬프트
-│     └─ references/                 # loop-contract, subagent-contracts
+│     ├─ references/                 # loop-contract, subagent-contracts
+│     └─ scripts/                    # check_state_sync.py, env_preflight.py
 ├─ .gitignore
 └─ README.md
 ```
